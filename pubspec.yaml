@@ -7,13 +7,39 @@ environment:
   sdk: ^3.13.7
 
 dependencies:
+  auto_route: ^11.2.0
+  dart_mappable: ^4.10.0
+  dio: ^5.11.1
+  drift: ^2.35.3
+  drift_flutter: ^0.3.1
   flutter:
     sdk: flutter
+  flutter_hooks: ^0.21.4
+  flutter_svg: ^2.3.2
+  hooks_riverpod: ^3.5.0
+  path_provider: ^2.1.6
+  retrofit: ^4.10.0
+  riverpod_annotation: ^4.0.8
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  build_runner: ^2.16.1
+  drift_dev: ^2.35.2
+  riverpod_generator: ^4.0.10
+  auto_route_generator: ^10.6.0
+  retrofit_generator: ^10.3.3
+  dart_mappable_builder: ^4.10.0
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/vectors/
+
+  fonts:
+    - family: FugazOne
+      fonts:
+        - asset: assets/fonts/fugaz_one/FugazOne-Regular.ttf
+
