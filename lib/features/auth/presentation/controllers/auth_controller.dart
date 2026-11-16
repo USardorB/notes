@@ -1,3 +1,4 @@
+import 'package:notes/core/error/app_exception.dart';
 import 'package:notes/features/auth/application/login_usecase.dart';
 import 'package:notes/features/auth/data/auth_repository.dart';
 import 'package:notes/features/auth/domain/auth_user.dart';
@@ -22,15 +23,15 @@ part 'auth_controller.g.dart';
 ///      directly. Whenever the `AuthSessions` table changes, every listener in
 ///      the app automatically rebuilds!
 ///   2. **The Action Controller (`AuthController`)**: Tracks the lifecycle of user
-///      button clicks (`login`, `logout`) using `AsyncValue<void>` (`AsyncLoading`,
-///      `AsyncData`, `AsyncError`).
+///      button clicks (`signIn`, `signUp`, `resetPassword`, `signOut`) using
+///      `AsyncValue<void>` (`AsyncLoading`, `AsyncData`, `AsyncError`).
 @Riverpod(keepAlive: true)
 Stream<AuthUser?> currentUser(Ref ref) {
   // Direct Reactive Read: No pass-through UseCase needed!
   return ref.watch(authRepositoryProvider).watchCurrentUser();
 }
 
-/// UI Controller for authentication mutations (Sign In / Sign Out).
+/// UI Controller for authentication mutations (Sign In / Sign Up / Reset / Sign Out).
 @riverpod
 class AuthController extends _$AuthController {
   @override
@@ -38,23 +39,52 @@ class AuthController extends _$AuthController {
     // Initial state is idle (`AsyncData(null)`).
   }
 
-  /// Invoked when the user taps "Sign In" on the LoginScreen.
+  /// Invoked when the user taps "LOG IN" on the LoginScreen.
   Future<bool> signIn({
     required String email,
     required String password,
   }) async {
-    // Equivalent to `emit(AuthLoading())` in Bloc:
     state = const AsyncLoading();
-
-    // `AsyncValue.guard` automatically catches any thrown `AppException`
-    // and transitions `state` to `AsyncError(e, stackTrace)`—or `AsyncData` on success!
     state = await AsyncValue.guard(() async {
       await ref.read(loginUseCaseProvider).execute(
             rawEmail: email,
             password: password,
           );
     });
+    return !state.hasError;
+  }
 
+  /// Invoked when the user taps "CREATE ACCOUNT" on the CreateAccountScreen.
+  Future<bool> signUp({
+    required String displayName,
+    required String email,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(registerUseCaseProvider).execute(
+            rawDisplayName: displayName,
+            rawEmail: email,
+            password: password,
+            confirmPassword: confirmPassword,
+          );
+    });
+    return !state.hasError;
+  }
+
+  /// Invoked when the user taps "SUBMIT" on the ForgotPasswordScreen.
+  Future<bool> requestPasswordReset({required String rawEmail}) async {
+    final email = rawEmail.trim().toLowerCase();
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      if (email.isEmpty || !email.contains('@')) {
+        throw const ValidationException('Please enter a valid email address.');
+      }
+      await ref
+          .read(authRepositoryProvider)
+          .requestPasswordReset(email: email);
+    });
     return !state.hasError;
   }
 
@@ -66,4 +96,3 @@ class AuthController extends _$AuthController {
     });
   }
 }
-

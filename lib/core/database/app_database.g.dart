@@ -437,6 +437,40 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntry> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _colorValueMeta = const VerificationMeta(
+    'colorValue',
+  );
+  @override
+  late final GeneratedColumn<int> colorValue = GeneratedColumn<int>(
+    'color_value',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0xFFFFFFFF),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<NoteType, String> type =
+      GeneratedColumn<String>(
+        'type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: Constant(NoteType.note.name),
+      ).withConverter<NoteType>($NotesTable.$convertertype);
+  static const VerificationMeta _todosJsonMeta = const VerificationMeta(
+    'todosJson',
+  );
+  @override
+  late final GeneratedColumn<String> todosJson = GeneratedColumn<String>(
+    'todos_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -464,6 +498,9 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntry> {
     userId,
     title,
     content,
+    colorValue,
+    type,
+    todosJson,
     updatedAt,
     syncStatus,
   ];
@@ -508,6 +545,18 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntry> {
     } else if (isInserting) {
       context.missing(_contentMeta);
     }
+    if (data.containsKey('color_value')) {
+      context.handle(
+        _colorValueMeta,
+        colorValue.isAcceptableOrUnknown(data['color_value']!, _colorValueMeta),
+      );
+    }
+    if (data.containsKey('todos_json')) {
+      context.handle(
+        _todosJsonMeta,
+        todosJson.isAcceptableOrUnknown(data['todos_json']!, _todosJsonMeta),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -541,6 +590,20 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntry> {
         DriftSqlType.string,
         data['${effectivePrefix}content'],
       )!,
+      colorValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color_value'],
+      )!,
+      type: $NotesTable.$convertertype.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}type'],
+        )!,
+      ),
+      todosJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}todos_json'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -559,12 +622,14 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteEntry> {
     return $NotesTable(attachedDatabase, alias);
   }
 
+  static JsonTypeConverter2<NoteType, String, String> $convertertype =
+      const EnumNameConverter<NoteType>(NoteType.values);
   static JsonTypeConverter2<SyncStatus, String, String> $convertersyncStatus =
       const EnumNameConverter<SyncStatus>(SyncStatus.values);
 }
 
 class NoteEntry extends DataClass implements Insertable<NoteEntry> {
-  /// Client-generated UUID.
+  /// Client-generated ID.
   final String id;
 
   /// Owner user ID (links to AuthSessions.userId).
@@ -575,6 +640,15 @@ class NoteEntry extends DataClass implements Insertable<NoteEntry> {
 
   /// Note body content.
   final String content;
+
+  /// ARGB color integer for the note card & editor background.
+  final int colorValue;
+
+  /// Distinguishes regular notes from checklist to-dos.
+  final NoteType type;
+
+  /// JSON-encoded list of [TodoItem]s for checklist notes.
+  final String todosJson;
 
   /// Last modification timestamp (used for Last-Write-Wins conflict resolution).
   final DateTime updatedAt;
@@ -587,6 +661,9 @@ class NoteEntry extends DataClass implements Insertable<NoteEntry> {
     required this.userId,
     required this.title,
     required this.content,
+    required this.colorValue,
+    required this.type,
+    required this.todosJson,
     required this.updatedAt,
     required this.syncStatus,
   });
@@ -597,6 +674,11 @@ class NoteEntry extends DataClass implements Insertable<NoteEntry> {
     map['user_id'] = Variable<String>(userId);
     map['title'] = Variable<String>(title);
     map['content'] = Variable<String>(content);
+    map['color_value'] = Variable<int>(colorValue);
+    {
+      map['type'] = Variable<String>($NotesTable.$convertertype.toSql(type));
+    }
+    map['todos_json'] = Variable<String>(todosJson);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     {
       map['sync_status'] = Variable<String>(
@@ -612,6 +694,9 @@ class NoteEntry extends DataClass implements Insertable<NoteEntry> {
       userId: Value(userId),
       title: Value(title),
       content: Value(content),
+      colorValue: Value(colorValue),
+      type: Value(type),
+      todosJson: Value(todosJson),
       updatedAt: Value(updatedAt),
       syncStatus: Value(syncStatus),
     );
@@ -627,6 +712,11 @@ class NoteEntry extends DataClass implements Insertable<NoteEntry> {
       userId: serializer.fromJson<String>(json['userId']),
       title: serializer.fromJson<String>(json['title']),
       content: serializer.fromJson<String>(json['content']),
+      colorValue: serializer.fromJson<int>(json['colorValue']),
+      type: $NotesTable.$convertertype.fromJson(
+        serializer.fromJson<String>(json['type']),
+      ),
+      todosJson: serializer.fromJson<String>(json['todosJson']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       syncStatus: $NotesTable.$convertersyncStatus.fromJson(
         serializer.fromJson<String>(json['syncStatus']),
@@ -641,6 +731,11 @@ class NoteEntry extends DataClass implements Insertable<NoteEntry> {
       'userId': serializer.toJson<String>(userId),
       'title': serializer.toJson<String>(title),
       'content': serializer.toJson<String>(content),
+      'colorValue': serializer.toJson<int>(colorValue),
+      'type': serializer.toJson<String>(
+        $NotesTable.$convertertype.toJson(type),
+      ),
+      'todosJson': serializer.toJson<String>(todosJson),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'syncStatus': serializer.toJson<String>(
         $NotesTable.$convertersyncStatus.toJson(syncStatus),
@@ -653,6 +748,9 @@ class NoteEntry extends DataClass implements Insertable<NoteEntry> {
     String? userId,
     String? title,
     String? content,
+    int? colorValue,
+    NoteType? type,
+    String? todosJson,
     DateTime? updatedAt,
     SyncStatus? syncStatus,
   }) => NoteEntry(
@@ -660,6 +758,9 @@ class NoteEntry extends DataClass implements Insertable<NoteEntry> {
     userId: userId ?? this.userId,
     title: title ?? this.title,
     content: content ?? this.content,
+    colorValue: colorValue ?? this.colorValue,
+    type: type ?? this.type,
+    todosJson: todosJson ?? this.todosJson,
     updatedAt: updatedAt ?? this.updatedAt,
     syncStatus: syncStatus ?? this.syncStatus,
   );
@@ -669,6 +770,11 @@ class NoteEntry extends DataClass implements Insertable<NoteEntry> {
       userId: data.userId.present ? data.userId.value : this.userId,
       title: data.title.present ? data.title.value : this.title,
       content: data.content.present ? data.content.value : this.content,
+      colorValue: data.colorValue.present
+          ? data.colorValue.value
+          : this.colorValue,
+      type: data.type.present ? data.type.value : this.type,
+      todosJson: data.todosJson.present ? data.todosJson.value : this.todosJson,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       syncStatus: data.syncStatus.present
           ? data.syncStatus.value
@@ -683,6 +789,9 @@ class NoteEntry extends DataClass implements Insertable<NoteEntry> {
           ..write('userId: $userId, ')
           ..write('title: $title, ')
           ..write('content: $content, ')
+          ..write('colorValue: $colorValue, ')
+          ..write('type: $type, ')
+          ..write('todosJson: $todosJson, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('syncStatus: $syncStatus')
           ..write(')'))
@@ -690,8 +799,17 @@ class NoteEntry extends DataClass implements Insertable<NoteEntry> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, userId, title, content, updatedAt, syncStatus);
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    title,
+    content,
+    colorValue,
+    type,
+    todosJson,
+    updatedAt,
+    syncStatus,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -700,6 +818,9 @@ class NoteEntry extends DataClass implements Insertable<NoteEntry> {
           other.userId == this.userId &&
           other.title == this.title &&
           other.content == this.content &&
+          other.colorValue == this.colorValue &&
+          other.type == this.type &&
+          other.todosJson == this.todosJson &&
           other.updatedAt == this.updatedAt &&
           other.syncStatus == this.syncStatus);
 }
@@ -709,6 +830,9 @@ class NotesCompanion extends UpdateCompanion<NoteEntry> {
   final Value<String> userId;
   final Value<String> title;
   final Value<String> content;
+  final Value<int> colorValue;
+  final Value<NoteType> type;
+  final Value<String> todosJson;
   final Value<DateTime> updatedAt;
   final Value<SyncStatus> syncStatus;
   final Value<int> rowid;
@@ -717,6 +841,9 @@ class NotesCompanion extends UpdateCompanion<NoteEntry> {
     this.userId = const Value.absent(),
     this.title = const Value.absent(),
     this.content = const Value.absent(),
+    this.colorValue = const Value.absent(),
+    this.type = const Value.absent(),
+    this.todosJson = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -726,6 +853,9 @@ class NotesCompanion extends UpdateCompanion<NoteEntry> {
     required String userId,
     required String title,
     required String content,
+    this.colorValue = const Value.absent(),
+    this.type = const Value.absent(),
+    this.todosJson = const Value.absent(),
     required DateTime updatedAt,
     this.syncStatus = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -739,6 +869,9 @@ class NotesCompanion extends UpdateCompanion<NoteEntry> {
     Expression<String>? userId,
     Expression<String>? title,
     Expression<String>? content,
+    Expression<int>? colorValue,
+    Expression<String>? type,
+    Expression<String>? todosJson,
     Expression<DateTime>? updatedAt,
     Expression<String>? syncStatus,
     Expression<int>? rowid,
@@ -748,6 +881,9 @@ class NotesCompanion extends UpdateCompanion<NoteEntry> {
       if (userId != null) 'user_id': userId,
       if (title != null) 'title': title,
       if (content != null) 'content': content,
+      if (colorValue != null) 'color_value': colorValue,
+      if (type != null) 'type': type,
+      if (todosJson != null) 'todos_json': todosJson,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (rowid != null) 'rowid': rowid,
@@ -759,6 +895,9 @@ class NotesCompanion extends UpdateCompanion<NoteEntry> {
     Value<String>? userId,
     Value<String>? title,
     Value<String>? content,
+    Value<int>? colorValue,
+    Value<NoteType>? type,
+    Value<String>? todosJson,
     Value<DateTime>? updatedAt,
     Value<SyncStatus>? syncStatus,
     Value<int>? rowid,
@@ -768,6 +907,9 @@ class NotesCompanion extends UpdateCompanion<NoteEntry> {
       userId: userId ?? this.userId,
       title: title ?? this.title,
       content: content ?? this.content,
+      colorValue: colorValue ?? this.colorValue,
+      type: type ?? this.type,
+      todosJson: todosJson ?? this.todosJson,
       updatedAt: updatedAt ?? this.updatedAt,
       syncStatus: syncStatus ?? this.syncStatus,
       rowid: rowid ?? this.rowid,
@@ -788,6 +930,17 @@ class NotesCompanion extends UpdateCompanion<NoteEntry> {
     }
     if (content.present) {
       map['content'] = Variable<String>(content.value);
+    }
+    if (colorValue.present) {
+      map['color_value'] = Variable<int>(colorValue.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(
+        $NotesTable.$convertertype.toSql(type.value),
+      );
+    }
+    if (todosJson.present) {
+      map['todos_json'] = Variable<String>(todosJson.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -810,6 +963,9 @@ class NotesCompanion extends UpdateCompanion<NoteEntry> {
           ..write('userId: $userId, ')
           ..write('title: $title, ')
           ..write('content: $content, ')
+          ..write('colorValue: $colorValue, ')
+          ..write('type: $type, ')
+          ..write('todosJson: $todosJson, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('rowid: $rowid')
@@ -1050,6 +1206,9 @@ typedef $$NotesTableCreateCompanionBuilder = NotesCompanion Function({
   required String userId,
   required String title,
   required String content,
+  Value<int> colorValue,
+  Value<NoteType> type,
+  Value<String> todosJson,
   required DateTime updatedAt,
   Value<SyncStatus> syncStatus,
   Value<int> rowid,
@@ -1059,6 +1218,9 @@ typedef $$NotesTableUpdateCompanionBuilder = NotesCompanion Function({
   Value<String> userId,
   Value<String> title,
   Value<String> content,
+  Value<int> colorValue,
+  Value<NoteType> type,
+  Value<String> todosJson,
   Value<DateTime> updatedAt,
   Value<SyncStatus> syncStatus,
   Value<int> rowid,
@@ -1089,6 +1251,22 @@ class $$NotesTableFilterComposer extends Composer<_$AppDatabase, $NotesTable> {
 
   ColumnFilters<String> get content => $composableBuilder(
     column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get colorValue => $composableBuilder(
+    column: $table.colorValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<NoteType, NoteType, String> get type =>
+      $composableBuilder(
+        column: $table.type,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get todosJson => $composableBuilder(
+    column: $table.todosJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1133,6 +1311,21 @@ class $$NotesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get colorValue => $composableBuilder(
+    column: $table.colorValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get todosJson => $composableBuilder(
+    column: $table.todosJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -1164,6 +1357,17 @@ class $$NotesTableAnnotationComposer
 
   GeneratedColumn<String> get content =>
       $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<int> get colorValue => $composableBuilder(
+    column: $table.colorValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<NoteType, String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get todosJson =>
+      $composableBuilder(column: $table.todosJson, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -1207,6 +1411,9 @@ class $$NotesTableTableManager
                 Value<String> userId = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String> content = const Value.absent(),
+                Value<int> colorValue = const Value.absent(),
+                Value<NoteType> type = const Value.absent(),
+                Value<String> todosJson = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<SyncStatus> syncStatus = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1215,6 +1422,9 @@ class $$NotesTableTableManager
                 userId: userId,
                 title: title,
                 content: content,
+                colorValue: colorValue,
+                type: type,
+                todosJson: todosJson,
                 updatedAt: updatedAt,
                 syncStatus: syncStatus,
                 rowid: rowid,
@@ -1225,6 +1435,9 @@ class $$NotesTableTableManager
                 required String userId,
                 required String title,
                 required String content,
+                Value<int> colorValue = const Value.absent(),
+                Value<NoteType> type = const Value.absent(),
+                Value<String> todosJson = const Value.absent(),
                 required DateTime updatedAt,
                 Value<SyncStatus> syncStatus = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1233,6 +1446,9 @@ class $$NotesTableTableManager
                 userId: userId,
                 title: title,
                 content: content,
+                colorValue: colorValue,
+                type: type,
+                todosJson: todosJson,
                 updatedAt: updatedAt,
                 syncStatus: syncStatus,
                 rowid: rowid,

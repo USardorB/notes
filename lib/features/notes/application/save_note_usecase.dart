@@ -13,7 +13,7 @@ part 'save_note_usecase.g.dart';
 /// Notice why `SaveNoteUseCase` exists instead of the UI calling
 /// `notesRepository.saveNoteLocally()` directly:
 /// 1. It verifies the user is authenticated (`AuthRepository`).
-/// 2. It enforces domain validation (rejects completely empty notes).
+/// 2. It enforces domain validation (rejects completely empty notes/to-dos).
 /// 3. It enforces domain invariants:
 ///    - Generates a deterministic/unique offline ID if creating a new note.
 ///    - Preserves `SyncStatus.pendingCreate` if a newly created offline note is
@@ -31,13 +31,22 @@ class SaveNoteUseCase {
     Note? existingNote,
     required String rawTitle,
     required String rawContent,
+    int colorValue = 0xFFFFFFFF,
+    NoteType type = NoteType.note,
+    List<TodoItem> todos = const [],
   }) async {
     final title = rawTitle.trim();
     final content = rawContent.trim();
+    final cleanedTodos = todos
+        .where((item) => item.text.trim().isNotEmpty)
+        .toList();
 
     // 1. Business Rule Validation
-    if (title.isEmpty && content.isEmpty) {
+    if (type == NoteType.note && title.isEmpty && content.isEmpty) {
       throw const ValidationException('Cannot save an empty note.');
+    }
+    if (type == NoteType.todo && title.isEmpty && cleanedTodos.isEmpty) {
+      throw const ValidationException('Cannot save an empty to-do list.');
     }
 
     // 2. Ensure active user session exists
@@ -59,8 +68,11 @@ class SaveNoteUseCase {
     final note = Note(
       id: existingNote?.id ?? 'note_${DateTime.now().microsecondsSinceEpoch}',
       userId: currentUser.id,
-      title: title.isEmpty ? 'Untitled Note' : title,
+      title: title,
       content: content,
+      colorValue: colorValue,
+      type: type,
+      todos: cleanedTodos,
       updatedAt: DateTime.now(),
       syncStatus: nextSyncStatus,
     );
@@ -79,4 +91,3 @@ SaveNoteUseCase saveNoteUseCase(Ref ref) {
     authRepository: ref.watch(authRepositoryProvider),
   );
 }
-

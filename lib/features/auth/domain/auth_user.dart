@@ -30,3 +30,11 @@ class LoginRequest({
   required final String email,
   required final String password,
 }) with LoginRequestMappable;
+
+/// Request payload for `POST /auth/register`.
+@MappableClass()
+class RegisterRequest({
+  required final String displayName,
+  required final String email,
+  required final String password,
+}) with RegisterRequestMappable;

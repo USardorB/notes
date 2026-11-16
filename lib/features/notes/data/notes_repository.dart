@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:notes/core/database/app_database.dart';
@@ -45,16 +46,7 @@ class NotesRepository {
   /// Writes the note to local SQLite immediately (< 2ms) and kicks off
   /// non-blocking background synchronization.
   Future<void> saveNoteLocally(Note note) async {
-    await localDao.upsertNote(
-      NotesCompanion(
-        id: Value(note.id),
-        userId: Value(note.userId),
-        title: Value(note.title),
-        content: Value(note.content),
-        updatedAt: Value(note.updatedAt),
-        syncStatus: Value(note.syncStatus),
-      ),
-    );
+    await localDao.upsertNote(_toCompanion(note, note.syncStatus));
 
     // Non-blocking background sync (fire-and-forget)
     unawaited(syncPendingNotes(note.userId));
@@ -98,24 +90,38 @@ class NotesRepository {
   }
 
   Future<void> _markAsSynced(Note note) async {
-    await localDao.upsertNote(
-      NotesCompanion(
-        id: Value(note.id),
-        userId: Value(note.userId),
-        title: Value(note.title),
-        content: Value(note.content),
-        updatedAt: Value(note.updatedAt),
-        syncStatus: const Value(SyncStatus.synced),
+    await localDao.upsertNote(_toCompanion(note, SyncStatus.synced));
+  }
+
+  NotesCompanion _toCompanion(Note note, SyncStatus syncStatus) {
+    return NotesCompanion(
+      id: Value(note.id),
+      userId: Value(note.userId),
+      title: Value(note.title),
+      content: Value(note.content),
+      colorValue: Value(note.colorValue),
+      type: Value(note.type),
+      todosJson: Value(
+        jsonEncode(note.todos.map((item) => item.toMap()).toList()),
       ),
+      updatedAt: Value(note.updatedAt),
+      syncStatus: Value(syncStatus),
     );
   }
 
   Note _toDomain(NoteEntry row) {
+    final decoded = (jsonDecode(row.todosJson) as List<dynamic>)
+        .map((e) => TodoItemMapper.fromMap(e as Map<String, dynamic>))
+        .toList();
+
     return Note(
       id: row.id,
       userId: row.userId,
       title: row.title,
       content: row.content,
+      colorValue: row.colorValue,
+      type: row.type,
+      todos: decoded,
       updatedAt: row.updatedAt,
       syncStatus: row.syncStatus,
     );
@@ -129,4 +135,3 @@ NotesRepository notesRepository(Ref ref) {
     remoteApi: ref.watch(notesRemoteApiProvider),
   );
 }
-

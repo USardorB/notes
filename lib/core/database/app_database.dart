@@ -3,6 +3,7 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:notes/core/database/tables/auth_session_table.dart';
 import 'package:notes/core/database/tables/notes_table.dart';
 import 'package:notes/core/sync/sync_status.dart';
+import 'package:notes/features/notes/domain/note.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_database.g.dart';
@@ -20,7 +21,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (migrator, from, to) async {
+          if (from < 2) {
+            await migrator.addColumn(notes, notes.colorValue);
+            await migrator.addColumn(notes, notes.type);
+            await migrator.addColumn(notes, notes.todosJson);
+          }
+        },
+      );
 
   static QueryExecutor _openConnection() {
     // `driftDatabase` from `package:drift_flutter` automatically resolves the

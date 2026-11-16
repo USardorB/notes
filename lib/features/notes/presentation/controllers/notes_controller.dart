@@ -6,16 +6,17 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'notes_controller.g.dart';
 
+enum NotesViewMode {
+  list,
+  grid,
+}
+
 /// ============================================================================
 /// ARCHITECTURAL NOTE — Reactive Composition in Riverpod
 /// ============================================================================
-/// Look at `notesListStreamProvider` below:
-/// It watches `currentUserProvider` (from the Auth feature) AND
-/// `notesRepositoryProvider` (from the Notes feature).
-///
-/// The moment the user logs in or switches accounts, `currentUserProvider`
-/// emits the new user, and `notesListStreamProvider` automatically re-subscribes
-/// to that user's SQLite notes stream in Drift!
+/// `notesListStreamProvider` watches `currentUserProvider` (Auth) and
+/// `notesRepositoryProvider` (Notes). When the user signs in or switches
+/// accounts, it automatically re-subscribes to that user's SQLite notes stream.
 @riverpod
 Stream<List<Note>> notesListStream(Ref ref) {
   final userAsync = ref.watch(currentUserProvider);
@@ -26,7 +27,44 @@ Stream<List<Note>> notesListStream(Ref ref) {
   return ref.watch(notesRepositoryProvider).watchNotes(user.id);
 }
 
-/// UI Controller for Note mutations (Create, Update, Delete).
+/// Holds the active view mode (single-column list vs 2-column staggered grid).
+@riverpod
+class NotesViewModeNotifier extends _$NotesViewModeNotifier {
+  @override
+  NotesViewMode build() => NotesViewMode.list;
+
+  void toggle() {
+    state = state == NotesViewMode.list
+        ? NotesViewMode.grid
+        : NotesViewMode.list;
+  }
+}
+
+/// Holds the selected color filter (`null` = show all notes).
+@riverpod
+class NotesColorFilter extends _$NotesColorFilter {
+  @override
+  int? build() => null;
+
+  void selectColor(int? colorValue) => state = colorValue;
+
+  void reset() => state = null;
+}
+
+/// Derived reactive provider: automatically filters `notesListStream` whenever
+/// either Drift emits new notes OR the user taps a color in "Filter by colour".
+@riverpod
+AsyncValue<List<Note>> filteredNotes(Ref ref) {
+  final notesAsync = ref.watch(notesListStreamProvider);
+  final selectedColor = ref.watch(notesColorFilterProvider);
+
+  return notesAsync.whenData((notes) {
+    if (selectedColor == null) return notes;
+    return notes.where((n) => n.colorValue == selectedColor).toList();
+  });
+}
+
+/// UI Controller for Note mutations (Create, Update, Delete, Todo Toggle).
 @riverpod
 class NotesController extends _$NotesController {
   @override
@@ -36,6 +74,9 @@ class NotesController extends _$NotesController {
     Note? existingNote,
     required String title,
     required String content,
+    int colorValue = 0xFFFFFFFF,
+    NoteType type = NoteType.note,
+    List<TodoItem> todos = const [],
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -43,9 +84,33 @@ class NotesController extends _$NotesController {
             existingNote: existingNote,
             rawTitle: title,
             rawContent: content,
+            colorValue: colorValue,
+            type: type,
+            todos: todos,
           );
     });
     return !state.hasError;
+  }
+
+  Future<void> toggleTodoItem({
+    required Note note,
+    required String todoId,
+  }) async {
+    final updatedTodos = note.todos.map((item) {
+      if (item.id == todoId) {
+        return item.copyWith(isDone: !item.isDone);
+      }
+      return item;
+    }).toList();
+
+    await saveNote(
+      existingNote: note,
+      title: note.title,
+      content: note.content,
+      colorValue: note.colorValue,
+      type: note.type,
+      todos: updatedTodos,
+    );
   }
 
   Future<void> deleteNote(String noteId) async {
@@ -61,4 +126,3 @@ class NotesController extends _$NotesController {
     });
   }
 }
-

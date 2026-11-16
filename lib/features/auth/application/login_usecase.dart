@@ -9,8 +9,9 @@ part 'login_usecase.g.dart';
 /// ARCHITECTURAL NOTE — When a UseCase Earns Its Keep
 /// ============================================================================
 /// Notice what is inside `application/`:
-/// - We DO have `LoginUseCase` (because login requires input validation,
-///   normalization, and post-login orchestration).
+/// - We DO have `LoginUseCase` and `RegisterUseCase` (because authentication
+///   requires input validation, normalization, password confirmation checks,
+///   and post-login orchestration).
 /// - We DO NOT have `WatchCurrentUserUseCase` (because watching the user stream
 ///   has zero business rules—it would be a 1-line pass-through!).
 ///
@@ -27,7 +28,6 @@ class LoginUseCase {
   }) async {
     final email = rawEmail.trim().toLowerCase();
 
-    // 1. Domain Validation Rules
     if (email.isEmpty || !email.contains('@')) {
       throw const ValidationException('Please enter a valid email address.');
     }
@@ -38,13 +38,50 @@ class LoginUseCase {
       );
     }
 
-    // 2. Execute authentication & local Drift session persistence
-    final user = await _authRepository.signInWithEmail(
+    return _authRepository.signInWithEmail(
       email: email,
       password: password,
     );
+  }
+}
 
-    return user;
+class RegisterUseCase {
+  final AuthRepository _authRepository;
+
+  const RegisterUseCase(this._authRepository);
+
+  Future<AuthUser> execute({
+    required String rawDisplayName,
+    required String rawEmail,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    final displayName = rawDisplayName.trim();
+    final email = rawEmail.trim().toLowerCase();
+
+    if (displayName.isEmpty) {
+      throw const ValidationException('Please enter your display name.');
+    }
+
+    if (email.isEmpty || !email.contains('@')) {
+      throw const ValidationException('Please enter a valid email address.');
+    }
+
+    if (password.length < 6) {
+      throw const ValidationException(
+        'Password must be at least 6 characters long.',
+      );
+    }
+
+    if (password != confirmPassword) {
+      throw const ValidationException('Passwords do not match.');
+    }
+
+    return _authRepository.signUpWithEmail(
+      displayName: displayName,
+      email: email,
+      password: password,
+    );
   }
 }
 
@@ -53,3 +90,7 @@ LoginUseCase loginUseCase(Ref ref) {
   return LoginUseCase(ref.watch(authRepositoryProvider));
 }
 
+@riverpod
+RegisterUseCase registerUseCase(Ref ref) {
+  return RegisterUseCase(ref.watch(authRepositoryProvider));
+}

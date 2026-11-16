@@ -22,6 +22,12 @@ abstract class AuthRemoteApi {
   @POST(ApiEndpoints.login)
   Future<AuthUser> login(@Body() LoginRequest request);
 
+  @POST(ApiEndpoints.register)
+  Future<AuthUser> register(@Body() RegisterRequest request);
+
+  @POST(ApiEndpoints.forgotPassword)
+  Future<void> forgotPassword(@Body() Map<String, dynamic> body);
+
   @POST(ApiEndpoints.logout)
   Future<void> logout();
 }

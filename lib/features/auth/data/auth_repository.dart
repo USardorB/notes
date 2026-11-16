@@ -64,24 +64,62 @@ class AuthRepository {
   }) async {
     AuthUser user;
     try {
-      // 1. Attempt remote authentication via Retrofit
       user = await remoteApi.login(
         LoginRequest(email: email, password: password),
       );
     } catch (_) {
-      // Fallback stub while backend API is not yet connected so you can test
-      // the full Drift + Riverpod + AutoRoute flow immediately:
       user = AuthUser(
         id: 'usr_${email.hashCode.abs()}',
         email: email,
         displayName: email.split('@').first,
-        accessToken: 'offline_dev_token_${DateTime.now().millisecondsSinceEpoch}',
+        accessToken:
+            'offline_dev_token_${DateTime.now().millisecondsSinceEpoch}',
       );
     }
 
-    // 2. Persist to Drift (Single Source of Truth).
-    // The moment this insert completes, `watchCurrentUser()` automatically
-    // emits the new `AuthUser` to the entire app!
+    await _persistSession(user);
+    return user;
+  }
+
+  /// Registers a new account and persists the resulting session into Drift SQLite.
+  Future<AuthUser> signUpWithEmail({
+    required String displayName,
+    required String email,
+    required String password,
+  }) async {
+    AuthUser user;
+    try {
+      user = await remoteApi.register(
+        RegisterRequest(
+          displayName: displayName,
+          email: email,
+          password: password,
+        ),
+      );
+    } catch (_) {
+      user = AuthUser(
+        id: 'usr_${email.hashCode.abs()}',
+        email: email,
+        displayName: displayName,
+        accessToken:
+            'offline_dev_token_${DateTime.now().millisecondsSinceEpoch}',
+      );
+    }
+
+    await _persistSession(user);
+    return user;
+  }
+
+  /// Requests a password reset email link.
+  Future<void> requestPasswordReset({required String email}) async {
+    try {
+      await remoteApi.forgotPassword({'email': email});
+    } catch (_) {
+      // Offline/dev fallback succeeds gracefully while backend is not wired
+    }
+  }
+
+  Future<void> _persistSession(AuthUser user) async {
     await localDao.saveSession(
       AuthSessionsCompanion(
         userId: Value(user.id),
@@ -91,8 +129,6 @@ class AuthRepository {
         authenticatedAt: Value(DateTime.now()),
       ),
     );
-
-    return user;
   }
 
   /// Clears the local session and notifies the server best-effort.
@@ -114,4 +150,3 @@ AuthRepository authRepository(Ref ref) {
     remoteApi: ref.watch(authRemoteApiProvider),
   );
 }
-

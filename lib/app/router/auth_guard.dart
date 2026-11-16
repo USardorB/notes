@@ -25,7 +25,7 @@ class AuthGuard extends AutoRouteGuard {
     if (user != null) {
       resolver.next(true);
     } else {
-      await router.replaceAll([const LoginRoute()]);
+      await router.replaceAll([const OnboardingRoute()]);
     }
   }
 }

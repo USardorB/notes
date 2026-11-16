@@ -25,8 +25,8 @@ part of 'auth_controller.dart';
 ///      directly. Whenever the `AuthSessions` table changes, every listener in
 ///      the app automatically rebuilds!
 ///   2. **The Action Controller (`AuthController`)**: Tracks the lifecycle of user
-///      button clicks (`login`, `logout`) using `AsyncValue<void>` (`AsyncLoading`,
-///      `AsyncData`, `AsyncError`).
+///      button clicks (`signIn`, `signUp`, `resetPassword`, `signOut`) using
+///      `AsyncValue<void>` (`AsyncLoading`, `AsyncData`, `AsyncError`).
 
 @ProviderFor(currentUser)
 final currentUserProvider = CurrentUserProvider._();
@@ -48,8 +48,8 @@ final currentUserProvider = CurrentUserProvider._();
 ///      directly. Whenever the `AuthSessions` table changes, every listener in
 ///      the app automatically rebuilds!
 ///   2. **The Action Controller (`AuthController`)**: Tracks the lifecycle of user
-///      button clicks (`login`, `logout`) using `AsyncValue<void>` (`AsyncLoading`,
-///      `AsyncData`, `AsyncError`).
+///      button clicks (`signIn`, `signUp`, `resetPassword`, `signOut`) using
+///      `AsyncValue<void>` (`AsyncLoading`, `AsyncData`, `AsyncError`).
 
 final class CurrentUserProvider
     extends
@@ -72,8 +72,8 @@ final class CurrentUserProvider
   ///      directly. Whenever the `AuthSessions` table changes, every listener in
   ///      the app automatically rebuilds!
   ///   2. **The Action Controller (`AuthController`)**: Tracks the lifecycle of user
-  ///      button clicks (`login`, `logout`) using `AsyncValue<void>` (`AsyncLoading`,
-  ///      `AsyncData`, `AsyncError`).
+  ///      button clicks (`signIn`, `signUp`, `resetPassword`, `signOut`) using
+  ///      `AsyncValue<void>` (`AsyncLoading`, `AsyncData`, `AsyncError`).
   CurrentUserProvider._()
     : super(
         from: null,
@@ -101,15 +101,15 @@ final class CurrentUserProvider
 
 String _$currentUserHash() => r'9c24480a388a978a5702ecc0123186d46bb075d7';
 
-/// UI Controller for authentication mutations (Sign In / Sign Out).
+/// UI Controller for authentication mutations (Sign In / Sign Up / Reset / Sign Out).
 
 @ProviderFor(AuthController)
 final authControllerProvider = AuthControllerProvider._();
 
-/// UI Controller for authentication mutations (Sign In / Sign Out).
+/// UI Controller for authentication mutations (Sign In / Sign Up / Reset / Sign Out).
 final class AuthControllerProvider
     extends $AsyncNotifierProvider<AuthController, void> {
-  /// UI Controller for authentication mutations (Sign In / Sign Out).
+  /// UI Controller for authentication mutations (Sign In / Sign Up / Reset / Sign Out).
   AuthControllerProvider._()
     : super(
         from: null,
@@ -129,9 +129,9 @@ final class AuthControllerProvider
   AuthController create() => AuthController();
 }
 
-String _$authControllerHash() => r'5f0a94cd6544a6a48859c5eb37841dc1e2d6c410';
+String _$authControllerHash() => r'de0f57714c603faca091b8c2b66f01c0e377a205';
 
-/// UI Controller for authentication mutations (Sign In / Sign Out).
+/// UI Controller for authentication mutations (Sign In / Sign Up / Reset / Sign Out).
 
 abstract class _$AuthController extends $AsyncNotifier<void> {
   FutureOr<void> build();
