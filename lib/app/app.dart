@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:notes/app/router/app_router.dart';
 import 'package:notes/app/theme/app_theme.dart';
 import 'package:notes/app/theme/theme_controller.dart';
+import 'package:notes/core/l10n/generated/app_localizations.dart';
 import 'package:notes/core/l10n/locale_controller.dart';
 
 class NotesApp extends ConsumerWidget {
@@ -22,12 +22,8 @@ class NotesApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
       locale: appLanguage.locale,
-      supportedLocales: AppLanguage.values.map((l) => l.locale).toList(),
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       routerConfig: appRouter.config(
         deepLinkTransformer: (uri) async {
           if (uri.scheme == 'habitnote') {

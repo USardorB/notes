@@ -9,6 +9,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "103.0.0"
+  analysis_server_plugin:
+    dependency: transitive
+    description:
+      name: analysis_server_plugin
+      sha256: c58b2a05b260a023eefd0848496ff6b113a318c6c95dad4215165a4bd54ae600
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.18"
   analyzer:
     dependency: transitive
     description:
@@ -25,6 +33,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.4"
+  analyzer_plugin:
+    dependency: transitive
+    description:
+      name: analyzer_plugin
+      sha256: c2a75baf1657171cc7872db96a12b07e385873cf7a73f2b4f7638e9d0701ee53
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.14.12"
   ansicolor:
     dependency: transitive
     description:
@@ -453,6 +469,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.2"
+  hardcoded_strings_lint:
+    dependency: "direct dev"
+    description:
+      name: hardcoded_strings_lint
+      sha256: "367a6104dccb00fa3b54f9d391903a005e1505a4c8eae9ee03635e7630e34bff"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
   hooks:
     dependency: transitive
     description:
