@@ -1,4 +1,5 @@
 import 'package:notes/core/error/app_exception.dart';
+import 'package:notes/core/l10n/app_texts.dart';
 import 'package:notes/features/auth/data/auth_repository.dart';
 import 'package:notes/features/auth/domain/auth_user.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -29,13 +30,11 @@ class LoginUseCase {
     final email = rawEmail.trim().toLowerCase();
 
     if (email.isEmpty || !email.contains('@')) {
-      throw const ValidationException('Please enter a valid email address.');
+      throw ValidationException(AppTexts.invalidEmailError);
     }
 
     if (password.length < 6) {
-      throw const ValidationException(
-        'Password must be at least 6 characters long.',
-      );
+      throw ValidationException(AppTexts.shortPasswordError);
     }
 
     return _authRepository.signInWithEmail(
@@ -64,13 +63,11 @@ class RegisterUseCase {
     }
 
     if (email.isEmpty || !email.contains('@')) {
-      throw const ValidationException('Please enter a valid email address.');
+      throw ValidationException(AppTexts.invalidEmailError);
     }
 
     if (password.length < 6) {
-      throw const ValidationException(
-        'Password must be at least 6 characters long.',
-      );
+      throw ValidationException(AppTexts.shortPasswordError);
     }
 
     if (password != confirmPassword) {

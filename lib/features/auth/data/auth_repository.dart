@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:notes/core/database/app_database.dart';
 import 'package:notes/core/error/app_exception.dart';
+import 'package:notes/core/l10n/app_texts.dart';
 import 'package:notes/core/sync/sync_status.dart';
 import 'package:notes/core/utils/uuid_v7.dart';
 import 'package:notes/features/auth/data/local/auth_local_dao.dart';
@@ -64,16 +65,14 @@ class AuthRepository {
     } on DioException catch (e) {
       final statusCode = e.response?.statusCode;
       if (statusCode == 401 || statusCode == 403) {
-        throw const UnauthorizedException('Invalid email or password.');
+        throw UnauthorizedException(AppTexts.invalidCredentials);
       }
       throw NetworkException(
-        'Internet connection is required to log in. Please check your connection and try again.',
+        AppTexts.loginRequiresInternet,
         statusCode: statusCode,
       );
     } catch (_) {
-      throw const NetworkException(
-        'Unable to reach the server. Internet connection is required to log in.',
-      );
+      throw NetworkException(AppTexts.loginRequiresInternet);
     }
   }
 
@@ -187,6 +186,13 @@ class AuthRepository {
       accessToken: session.accessToken,
       syncStatus: session.syncStatus,
     );
+  }
+
+  /// Updates the user's display name locally in Drift SQLite.
+  Future<void> updateDisplayName(String displayName) async {
+    final current = await getCurrentUser();
+    if (current == null) return;
+    await _persistSession(current.copyWith(displayName: displayName));
   }
 
   /// Clears the local session and notifies the server best-effort.

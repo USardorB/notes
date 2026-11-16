@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:notes/app/router/app_router.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/core/l10n/app_texts.dart';
 import 'package:notes/features/auth/presentation/controllers/auth_controller.dart';
 
 @RoutePage()
@@ -17,6 +18,7 @@ class CreateAccountScreen extends HookConsumerWidget {
     final passwordController = useTextEditingController();
     final confirmPasswordController = useTextEditingController();
     final obscurePassword = useState(true);
+    final colors = Theme.of(context).colorScheme;
 
     final authActionState = ref.watch(authControllerProvider);
 
@@ -25,14 +27,14 @@ class CreateAccountScreen extends HookConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.error.toString()),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            backgroundColor: colors.error,
           ),
         );
       }
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.surfaceContainer,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -40,10 +42,10 @@ class CreateAccountScreen extends HookConsumerWidget {
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => context.router.maybePop(),
         ),
-        title: const Text(
-          'Create Account',
+        title: Text(
+          AppTexts.createAccount,
           style: TextStyle(
-            color: Colors.black,
+            color: colors.onSurface,
             fontSize: 18,
             fontWeight: FontWeight.w500,
           ),
@@ -59,20 +61,20 @@ class CreateAccountScreen extends HookConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Let’s get to know you !',
+                    Text(
+                      AppTexts.letsGetToKnowYou,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black,
+                        color: colors.onSurface,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'Enter your details to continue',
+                    Text(
+                      AppTexts.enterDetailsToContinue,
                       style: TextStyle(
                         fontSize: 15,
-                        color: Colors.black87,
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -80,13 +82,13 @@ class CreateAccountScreen extends HookConsumerWidget {
                       controller: displayNameController,
                       textCapitalization: TextCapitalization.words,
                       decoration: InputDecoration(
-                        hintText: 'Display Name',
+                        hintText: AppTexts.displayName,
                         prefixIcon: const Icon(
                           Icons.person_outline,
                           color: AppColors.primary,
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colors.surfaceContainerLowest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -98,13 +100,13 @@ class CreateAccountScreen extends HookConsumerWidget {
                       controller: emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'Email Address',
+                        hintText: AppTexts.emailAddress,
                         prefixIcon: const Icon(
                           Icons.email_outlined,
                           color: AppColors.primary,
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colors.surfaceContainerLowest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -116,7 +118,7 @@ class CreateAccountScreen extends HookConsumerWidget {
                       controller: passwordController,
                       obscureText: obscurePassword.value,
                       decoration: InputDecoration(
-                        hintText: 'Password',
+                        hintText: AppTexts.password,
                         prefixIcon: const Icon(
                           Icons.lock_outline,
                           color: AppColors.primary,
@@ -126,13 +128,13 @@ class CreateAccountScreen extends HookConsumerWidget {
                             obscurePassword.value
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
-                            color: Colors.black54,
+                            color: colors.onSurfaceVariant,
                           ),
                           onPressed: () =>
                               obscurePassword.value = !obscurePassword.value,
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colors.surfaceContainerLowest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -144,10 +146,10 @@ class CreateAccountScreen extends HookConsumerWidget {
                       controller: confirmPasswordController,
                       obscureText: obscurePassword.value,
                       decoration: InputDecoration(
-                        hintText: 'Confirm Password',
+                        hintText: AppTexts.confirmPassword,
                         prefixIcon: const SizedBox(width: 48),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colors.surfaceContainerLowest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -158,20 +160,20 @@ class CreateAccountScreen extends HookConsumerWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Already have an account?',
+                        Text(
+                          AppTexts.alreadyHaveAccount,
                           style: TextStyle(
                             fontSize: 14.5,
-                            color: Colors.black87,
+                            color: colors.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 4),
                         GestureDetector(
                           onTap: () =>
                               context.router.replace(const LoginRoute()),
-                          child: const Text(
-                            'Login here',
-                            style: TextStyle(
+                          child: Text(
+                            AppTexts.loginHere,
+                            style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: AppColors.primary,
@@ -184,33 +186,31 @@ class CreateAccountScreen extends HookConsumerWidget {
                     ),
                     const Spacer(),
                     const SizedBox(height: 32),
-                    const Text.rich(
+                    Text.rich(
                       TextSpan(
                         style: TextStyle(
                           fontSize: 13.5,
-                          color: Colors.black87,
+                          color: colors.onSurfaceVariant,
                           height: 1.4,
                         ),
                         children: [
+                          TextSpan(text: AppTexts.termsAgreementPrefix),
                           TextSpan(
-                            text:
-                                'By clicking the “CREATE ACCOUNT” button, you agree to ',
-                          ),
-                          TextSpan(
-                            text: 'Terms of use',
+                            text: AppTexts.termsOfUse,
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: Colors.black,
+                              color: colors.onSurface,
                             ),
                           ),
-                          TextSpan(text: ' and '),
+                          TextSpan(text: AppTexts.andWord),
                           TextSpan(
-                            text: 'Privacy Policy',
+                            text: AppTexts.privacyPolicy,
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: Colors.black,
+                              color: colors.onSurface,
                             ),
                           ),
+                          TextSpan(text: AppTexts.termsAgreementSuffix),
                         ],
                       ),
                     ),
@@ -240,7 +240,7 @@ class CreateAccountScreen extends HookConsumerWidget {
                                     );
                                 if (success && context.mounted) {
                                   await context.router.replaceAll([
-                                    const NotesListRoute(),
+                                    MainShellRoute(),
                                   ]);
                                 }
                               },
@@ -253,9 +253,9 @@ class CreateAccountScreen extends HookConsumerWidget {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text(
-                                'CREATE ACCOUNT',
-                                style: TextStyle(
+                            : Text(
+                                AppTexts.createAccountUpper,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   letterSpacing: 0.5,
                                 ),

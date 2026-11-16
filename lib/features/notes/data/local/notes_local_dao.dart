@@ -75,6 +75,17 @@ class NotesLocalDao extends DatabaseAccessor<AppDatabase>
       );
     return query.get();
   }
+
+  /// Reactive stream of how many dirty rows are awaiting sync.
+  Stream<int> watchUnsyncedCount(String userId) {
+    final query = select(notes)
+      ..where(
+        (tbl) =>
+            tbl.userId.equals(userId) &
+            tbl.syncStatus.isNotValue(SyncStatus.synced.name),
+      );
+    return query.watch().map((rows) => rows.length);
+  }
 }
 
 /// Notice: Because our domain model is also named `Note`, let's check Drift's

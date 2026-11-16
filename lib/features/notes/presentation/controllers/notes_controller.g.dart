@@ -66,6 +66,96 @@ final class NotesListStreamProvider
 
 String _$notesListStreamHash() => r'e59ecfb720525baac96995858ef6949fff2cac58';
 
+/// Streams the number of unsynced notes for the active user.
+
+@ProviderFor(unsyncedNotesCount)
+final unsyncedNotesCountProvider = UnsyncedNotesCountProvider._();
+
+/// Streams the number of unsynced notes for the active user.
+
+final class UnsyncedNotesCountProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
+    with $FutureModifier<int>, $StreamProvider<int> {
+  /// Streams the number of unsynced notes for the active user.
+  UnsyncedNotesCountProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'unsyncedNotesCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$unsyncedNotesCountHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<int> create(Ref ref) {
+    return unsyncedNotesCount(ref);
+  }
+}
+
+String _$unsyncedNotesCountHash() =>
+    r'39453204f0ef295a869a21217eac264c495386b1';
+
+/// Dedicated two-way sync controller used by the Notes header Sync button.
+
+@ProviderFor(NotesSyncController)
+final notesSyncControllerProvider = NotesSyncControllerProvider._();
+
+/// Dedicated two-way sync controller used by the Notes header Sync button.
+final class NotesSyncControllerProvider
+    extends $AsyncNotifierProvider<NotesSyncController, void> {
+  /// Dedicated two-way sync controller used by the Notes header Sync button.
+  NotesSyncControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'notesSyncControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$notesSyncControllerHash();
+
+  @$internal
+  @override
+  NotesSyncController create() => NotesSyncController();
+}
+
+String _$notesSyncControllerHash() =>
+    r'ce9cfc1b4a2c2cc5d891cc2dc950d1dfafe5d123';
+
+/// Dedicated two-way sync controller used by the Notes header Sync button.
+
+abstract class _$NotesSyncController extends $AsyncNotifier<void> {
+  FutureOr<void> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<void>, void>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// Holds the active view mode (single-column list vs 2-column staggered grid).
 
 @ProviderFor(NotesViewModeNotifier)

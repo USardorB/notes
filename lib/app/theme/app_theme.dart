@@ -7,23 +7,31 @@ abstract final class AppColors {
   /// Light warm gray background (`#F1F1F1`) used on Onboarding & Auth screens.
   static const Color background = Color(0xFFF1F1F1);
 
-  /// Soft peach/cream used in the menu gradient.
-  static const Color menuGradientMid = Color(0xFFFDF3E1);
+  /// Dark mode scaffold background.
+  static const Color darkBackground = Color(0xFF141416);
 
-  /// Text primary dark color.
-  static const Color textPrimary = Color(0xFF111111);
+  /// Dark mode elevated surface (cards, inputs, bottom nav).
+  static const Color darkSurface = Color(0xFF1E1F23);
 }
 
 abstract final class AppTheme {
   static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: AppColors.background,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: Colors.white,
+      colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
-        surface: AppColors.background,
-        brightness: Brightness.light,
+        onPrimary: Colors.white,
+        surface: Colors.white,
+        onSurface: Colors.black,
+        surfaceContainerLowest: Colors.white,
+        surfaceContainerLow: Color(0xFFF7F7F7),
+        surfaceContainer: AppColors.background,
+        surfaceContainerHigh: Color(0xFFEDEDED),
+        onSurfaceVariant: Colors.black54,
+        outline: Colors.black87,
+        outlineVariant: Color(0xFFD0D5DD),
       ),
     );
   }
@@ -31,10 +39,20 @@ abstract final class AppTheme {
   static ThemeData get dark {
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: AppColors.darkBackground,
+      colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
-        brightness: Brightness.dark,
+        onPrimary: Colors.black,
+        surface: AppColors.darkBackground,
+        onSurface: Color(0xFFF3F4F6),
+        surfaceContainerLowest: Color(0xFF101012),
+        surfaceContainerLow: Color(0xFF1A1B1E),
+        surfaceContainer: AppColors.darkSurface,
+        surfaceContainerHigh: Color(0xFF282A30),
+        onSurfaceVariant: Color(0xFF9CA3AF),
+        outline: Color(0xFF6B7280),
+        outlineVariant: Color(0xFF374151),
       ),
     );
   }

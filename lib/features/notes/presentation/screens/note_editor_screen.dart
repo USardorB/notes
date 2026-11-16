@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/core/l10n/app_texts.dart';
+import 'package:notes/core/widgets/tour_spotlight_overlay.dart';
 import 'package:notes/features/notes/domain/note.dart';
 import 'package:notes/features/notes/presentation/controllers/notes_controller.dart';
 import 'package:notes/features/notes/presentation/controllers/notes_tour_controller.dart';
 import 'package:notes/features/notes/presentation/widgets/note_palette.dart';
-import 'package:notes/features/notes/presentation/widgets/tour_spotlight_overlay.dart';
 
 @RoutePage()
 class NoteEditorScreen extends HookConsumerWidget {
@@ -109,6 +110,16 @@ class NoteEditorScreen extends HookConsumerWidget {
       }
     }
 
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final isDefaultWhite = selectedColor.value == 0xFFFFFFFF;
+    final bgColor =
+        isDefaultWhite && isDark ? colors.surface : Color(selectedColor.value);
+    final fgColor = isDefaultWhite && isDark ? colors.onSurface : Colors.black;
+    final hintColor =
+        isDefaultWhite && isDark ? colors.onSurfaceVariant : Colors.black38;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -119,7 +130,7 @@ class NoteEditorScreen extends HookConsumerWidget {
       child: Stack(
         children: [
           Scaffold(
-            backgroundColor: Color(selectedColor.value),
+            backgroundColor: bgColor,
             appBar: AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
@@ -130,9 +141,9 @@ class NoteEditorScreen extends HookConsumerWidget {
                 onPressed: saveAndPop,
               ),
               title: Text(
-                existingNote == null ? 'Add Note' : 'Edit Note',
-                style: const TextStyle(
-                  color: Colors.black,
+                existingNote == null ? AppTexts.addNoteTitle : AppTexts.editNote,
+                style: TextStyle(
+                  color: fgColor,
                   fontSize: 19,
                   fontWeight: FontWeight.w500,
                 ),
@@ -140,7 +151,7 @@ class NoteEditorScreen extends HookConsumerWidget {
               actions: [
                 IconButton(
                   key: moreButtonKey,
-                  icon: const Icon(Icons.more_vert, color: Colors.black),
+                  icon: Icon(Icons.more_vert, color: fgColor),
                   onPressed: openOptionsSheet,
                 ),
               ],
@@ -156,15 +167,15 @@ class NoteEditorScreen extends HookConsumerWidget {
                       controller: titleController,
                       maxLines: null,
                       textCapitalization: TextCapitalization.sentences,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 26,
                         height: 1.3,
                         fontWeight: FontWeight.w400,
-                        color: Colors.black,
+                        color: fgColor,
                       ),
-                      decoration: const InputDecoration(
-                        hintText: 'Title',
-                        hintStyle: TextStyle(color: Colors.black38),
+                      decoration: InputDecoration(
+                        hintText: AppTexts.noteTitleHint,
+                        hintStyle: TextStyle(color: hintColor),
                         border: InputBorder.none,
                       ),
                     ),
@@ -174,14 +185,14 @@ class NoteEditorScreen extends HookConsumerWidget {
                       maxLines: null,
                       minLines: 14,
                       textCapitalization: TextCapitalization.sentences,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16.5,
                         height: 1.5,
-                        color: Colors.black87,
+                        color: fgColor.withValues(alpha: 0.87),
                       ),
-                      decoration: const InputDecoration(
-                        hintText: 'Start typing...',
-                        hintStyle: TextStyle(color: Colors.black38),
+                      decoration: InputDecoration(
+                        hintText: AppTexts.noteBodyHint,
+                        hintStyle: TextStyle(color: hintColor),
                         border: InputBorder.none,
                       ),
                     ),
@@ -195,11 +206,10 @@ class NoteEditorScreen extends HookConsumerWidget {
           if (tourStep == NotesTourStep.editPrefilledNote)
             TourSpotlightOverlay(
               targetKey: editorFieldsKey,
-              stepLabel: 'Step 3 of 6',
-              title: 'Edit Your Note',
-              description:
-                  'We’ve prefilled a sample title and note. Feel free to change them to whatever you want, then tap Next.',
-              primaryActionLabel: 'Next',
+              stepLabel: AppTexts.tourStepLabel(3, 6),
+              title: AppTexts.tourStep3Title,
+              description: AppTexts.tourStep3Desc,
+              primaryActionLabel: AppTexts.next,
               onPrimaryAction: () => ref
                   .read(notesTourProvider.notifier)
                   .advanceTo(NotesTourStep.tapMoreMenu),
@@ -210,10 +220,9 @@ class NoteEditorScreen extends HookConsumerWidget {
           if (tourStep == NotesTourStep.tapMoreMenu)
             TourSpotlightOverlay(
               targetKey: moreButtonKey,
-              stepLabel: 'Step 4 of 6',
-              title: 'Colours & Delete Menu',
-              description:
-                  'Tap the ⋮ button to change your note’s colour or delete it.',
+              stepLabel: AppTexts.tourStepLabel(4, 6),
+              title: AppTexts.tourStep4Title,
+              description: AppTexts.tourStep4Desc,
               onSkip: () => ref.read(notesTourProvider.notifier).stop(),
             ),
 
@@ -221,10 +230,9 @@ class NoteEditorScreen extends HookConsumerWidget {
           if (tourStep == NotesTourStep.tapBackToSave)
             TourSpotlightOverlay(
               targetKey: backButtonKey,
-              stepLabel: 'Step 6 of 6',
-              title: 'Auto-Save on Back',
-              description:
-                  'Tap Back (or your device’s back button). Your note is saved automatically—no Save button needed!',
+              stepLabel: AppTexts.tourStepLabel(6, 6),
+              title: AppTexts.tourStep6Title,
+              description: AppTexts.tourStep6Desc,
               onSkip: () => ref.read(notesTourProvider.notifier).stop(),
             ),
         ],

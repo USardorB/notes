@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/core/l10n/app_texts.dart';
 import 'package:notes/features/auth/presentation/controllers/auth_controller.dart';
 
 @RoutePage()
@@ -13,20 +14,21 @@ class ForgotPasswordScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final emailController = useTextEditingController();
     final authActionState = ref.watch(authControllerProvider);
+    final colors = Theme.of(context).colorScheme;
 
     ref.listen<AsyncValue<void>>(authControllerProvider, (previous, next) {
       if (next.hasError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.error.toString()),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            backgroundColor: colors.error,
           ),
         );
       }
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.surfaceContainer,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -34,10 +36,10 @@ class ForgotPasswordScreen extends HookConsumerWidget {
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => context.router.maybePop(),
         ),
-        title: const Text(
-          'Forgot Password',
+        title: Text(
+          AppTexts.forgotPassword,
           style: TextStyle(
-            color: Colors.black,
+            color: colors.onSurface,
             fontSize: 18,
             fontWeight: FontWeight.w500,
           ),
@@ -54,12 +56,12 @@ class ForgotPasswordScreen extends HookConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 16),
-                    const Text(
-                      'Please enter your account’s email address\nand we will send you a link\nto reset your password.',
+                    Text(
+                      AppTexts.forgotPasswordPrompt,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w300,
-                        color: Colors.black87,
+                        color: colors.onSurfaceVariant,
                         height: 1.5,
                       ),
                     ),
@@ -68,13 +70,13 @@ class ForgotPasswordScreen extends HookConsumerWidget {
                       controller: emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'Email',
+                        hintText: AppTexts.email,
                         prefixIcon: const Icon(
                           Icons.email_outlined,
                           color: AppColors.primary,
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colors.surfaceContainerLowest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -104,10 +106,8 @@ class ForgotPasswordScreen extends HookConsumerWidget {
                                     );
                                 if (ok && context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Password reset link sent to your email.',
-                                      ),
+                                    SnackBar(
+                                      content: Text(AppTexts.resetLinkSent),
                                     ),
                                   );
                                   await context.router.maybePop();
@@ -122,9 +122,9 @@ class ForgotPasswordScreen extends HookConsumerWidget {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text(
-                                'SUBMIT',
-                                style: TextStyle(
+                            : Text(
+                                AppTexts.submitUpper,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   letterSpacing: 0.5,
                                 ),

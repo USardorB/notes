@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:notes/core/l10n/app_texts.dart';
 
 class HabitBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -12,10 +13,12 @@ class HabitBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFF1F1F1),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainer,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SafeArea(
         top: false,
@@ -26,25 +29,25 @@ class HabitBottomNavBar extends StatelessWidget {
             children: [
               _NavItem(
                 icon: Icons.description_outlined,
-                label: 'Notes',
+                label: AppTexts.navNotes,
                 selected: currentIndex == 0,
                 onTap: () => onTap(0),
               ),
               _NavItem(
                 icon: Icons.image_search_outlined,
-                label: 'OCR',
+                label: AppTexts.navOcr,
                 selected: currentIndex == 1,
                 onTap: () => onTap(1),
               ),
               _NavItem(
                 icon: Icons.help_outline,
-                label: 'Help',
+                label: AppTexts.navHelp,
                 selected: currentIndex == 2,
                 onTap: () => onTap(2),
               ),
               _NavItem(
                 icon: Icons.person_outline,
-                label: 'Me',
+                label: AppTexts.navMe,
                 selected: currentIndex == 3,
                 onTap: () => onTap(3),
               ),
@@ -71,7 +74,9 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? Colors.black : Colors.black54;
+    final colors = Theme.of(context).colorScheme;
+    final color = selected ? colors.onSurface : colors.onSurfaceVariant;
+
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: onTap,

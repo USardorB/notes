@@ -2,7 +2,9 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:notes/app/router/app_router.dart';
 import 'package:notes/app/theme/app_theme.dart';
-import 'package:notes/features/auth/presentation/widgets/habit_logo_mark.dart';
+import 'package:notes/core/l10n/app_texts.dart';
+import 'package:notes/core/widgets/habit_logo_mark.dart';
+import 'package:notes/features/profile/presentation/screens/legal_document_screen.dart';
 
 /// Material `Drawer` (`HaBIT Note V1.0.0`, Forgot Password, Privacy Policy,
 /// Terms of Use, with vertical amber gradient).
@@ -43,23 +45,23 @@ class HabitDrawer extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 28),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: leftIndent),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: leftIndent),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'HaBIT Note',
-                      style: TextStyle(
+                      AppTexts.appName,
+                      style: const TextStyle(
                         fontFamily: 'FugazOne',
                         fontSize: 24,
                         color: Colors.black,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
-                      'V1.0.0',
-                      style: TextStyle(
+                      AppTexts.appVersion,
+                      style: const TextStyle(
                         fontSize: 17,
                         color: Colors.black,
                         fontWeight: FontWeight.w400,
@@ -76,7 +78,7 @@ class HabitDrawer extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               _MenuLinkItem(
-                title: 'Forgot Password',
+                title: AppTexts.forgotPassword,
                 leftIndent: leftIndent,
                 onTap: () {
                   Navigator.of(context).pop();
@@ -84,14 +86,24 @@ class HabitDrawer extends StatelessWidget {
                 },
               ),
               _MenuLinkItem(
-                title: 'Privacy Policy',
+                title: AppTexts.privacyPolicy,
                 leftIndent: leftIndent,
-                onTap: () => Navigator.of(context).pop(),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.router.push(
+                    LegalDocumentRoute(type: LegalDocumentType.privacyPolicy),
+                  );
+                },
               ),
               _MenuLinkItem(
-                title: 'Terms of Use',
+                title: AppTexts.termsOfUse,
                 leftIndent: leftIndent,
-                onTap: () => Navigator.of(context).pop(),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.router.push(
+                    LegalDocumentRoute(type: LegalDocumentType.termsOfUse),
+                  );
+                },
               ),
             ],
           ),

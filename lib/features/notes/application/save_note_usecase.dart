@@ -1,4 +1,5 @@
 import 'package:notes/core/error/app_exception.dart';
+import 'package:notes/core/l10n/app_texts.dart';
 import 'package:notes/core/sync/sync_status.dart';
 import 'package:notes/core/utils/uuid_v7.dart';
 import 'package:notes/features/auth/data/auth_repository.dart';
@@ -44,10 +45,10 @@ class SaveNoteUseCase {
 
     // 1. Business Rule Validation
     if (type == NoteType.note && title.isEmpty && content.isEmpty) {
-      throw const ValidationException('Cannot save an empty note.');
+      throw ValidationException(AppTexts.emptyNoteError);
     }
     if (type == NoteType.todo && title.isEmpty && cleanedTodos.isEmpty) {
-      throw const ValidationException('Cannot save an empty to-do list.');
+      throw ValidationException(AppTexts.emptyTodoError);
     }
 
     // 2. Ensure active user session exists

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="new_note"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_new_note_short"
+        android:shortcutLongLabel="@string/shortcut_new_note_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="habitnote://notes/edit"
+            android:targetPackage="dev.usardor.notes"
+            android:targetClass="dev.usardor.notes.MainActivity" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="new_todo"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_new_todo_short"
+        android:shortcutLongLabel="@string/shortcut_new_todo_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="habitnote://todos/edit"
+            android:targetPackage="dev.usardor.notes"
+            android:targetClass="dev.usardor.notes.MainActivity" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="scan_ocr"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_ocr_short"
+        android:shortcutLongLabel="@string/shortcut_ocr_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="habitnote://notes?tab=ocr"
+            android:targetPackage="dev.usardor.notes"
+            android:targetClass="dev.usardor.notes.MainActivity" />
+    </shortcut>
+</shortcuts>

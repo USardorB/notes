@@ -4,25 +4,62 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:notes/app/router/app_router.dart';
+import 'package:notes/app/shell/habit_bottom_nav_bar.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/core/l10n/app_texts.dart';
+import 'package:notes/core/l10n/locale_controller.dart';
+import 'package:notes/core/widgets/habit_confirm_dialog.dart';
+import 'package:notes/core/widgets/tour_spotlight_overlay.dart';
 import 'package:notes/features/notes/presentation/controllers/notes_tour_controller.dart';
-import 'package:notes/features/notes/presentation/widgets/habit_bottom_nav_bar.dart';
 import 'package:notes/features/notes/presentation/widgets/habit_dialogs.dart';
-import 'package:notes/features/notes/presentation/widgets/help_tab.dart';
 import 'package:notes/features/notes/presentation/widgets/notes_home_tab.dart';
-import 'package:notes/features/notes/presentation/widgets/ocr_tab.dart';
-import 'package:notes/features/notes/presentation/widgets/profile_tab.dart';
-import 'package:notes/features/notes/presentation/widgets/tour_spotlight_overlay.dart';
+import 'package:notes/features/ocr/presentation/controllers/ocr_tour_controller.dart';
+import 'package:notes/features/ocr/presentation/widgets/ocr_tab.dart';
+import 'package:notes/features/profile/presentation/widgets/help_tab.dart';
+import 'package:notes/features/profile/presentation/widgets/profile_tab.dart';
 
+/// Top-level 4-tab Application Shell hosting Notes, OCR, Help, and Profile.
 @RoutePage()
-class NotesListScreen extends HookConsumerWidget {
-  const NotesListScreen({super.key});
+class MainShellScreen extends HookConsumerWidget {
+  final String? tab;
+
+  const MainShellScreen({
+    super.key,
+    @QueryParam('tab') this.tab,
+  });
+
+  static int _tabIndexFromQuery(String? tab) {
+    return switch (tab?.toLowerCase()) {
+      'ocr' => 1,
+      'help' => 2,
+      'me' => 3,
+      _ => 0,
+    };
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedTab = useState(0);
+    ref.watch(appLocaleProvider);
+
+    final selectedTab = useState(_tabIndexFromQuery(tab));
+
+    useEffect(
+      () {
+        if (tab != null) {
+          selectedTab.value = _tabIndexFromQuery(tab);
+        }
+        return null;
+      },
+      [tab],
+    );
+
     final tourStep = ref.watch(notesTourProvider);
+    final ocrTourStep = ref.watch(ocrTourProvider);
     final addFabKey = useMemoized(GlobalKey.new);
+    final ocrFabKey = useMemoized(GlobalKey.new);
+    final ocrScanKey = useMemoized(GlobalKey.new);
+    final ocrCopyKey = useMemoized(GlobalKey.new);
+    final colors = Theme.of(context).colorScheme;
 
     return PopScope(
       canPop: false,
@@ -32,11 +69,15 @@ class NotesListScreen extends HookConsumerWidget {
           ref.read(notesTourProvider.notifier).stop();
           return;
         }
+        if (ocrTourStep != OcrTourStep.inactive) {
+          ref.read(ocrTourProvider.notifier).stop();
+          return;
+        }
         final shouldExit = await showHabitConfirmDialog(
           context: context,
-          title: 'Exit app',
-          message: 'Are you sure you want to exit the app?',
-          confirmLabel: 'Exit',
+          title: AppTexts.exitAppTitle,
+          message: AppTexts.exitAppConfirm,
+          confirmLabel: AppTexts.exitButton,
         );
         if (shouldExit) {
           await SystemNavigator.pop();
@@ -45,12 +86,19 @@ class NotesListScreen extends HookConsumerWidget {
       child: Stack(
         children: [
           Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: colors.surface,
             body: IndexedStack(
               index: selectedTab.value,
               children: [
                 const SafeArea(bottom: false, child: NotesHomeTab()),
-                const SafeArea(bottom: false, child: OcrTab()),
+                SafeArea(
+                  bottom: false,
+                  child: OcrTab(
+                    addFabKey: ocrFabKey,
+                    scanButtonKey: ocrScanKey,
+                    copyButtonKey: ocrCopyKey,
+                  ),
+                ),
                 HelpTab(onSwitchTab: (index) => selectedTab.value = index),
                 const SafeArea(bottom: false, child: ProfileTab()),
               ],
@@ -111,11 +159,40 @@ class NotesListScreen extends HookConsumerWidget {
           if (selectedTab.value == 0 && tourStep == NotesTourStep.tapAddFab)
             TourSpotlightOverlay(
               targetKey: addFabKey,
-              stepLabel: 'Step 1 of 6',
-              title: 'Create Your First Note',
-              description:
-                  'Tap the + button to choose between creating a Note or a To-do list.',
+              stepLabel: AppTexts.tourStepLabel(1, 6),
+              title: AppTexts.tourStep1Title,
+              description: AppTexts.tourStep1Desc,
               onSkip: () => ref.read(notesTourProvider.notifier).stop(),
+            ),
+          if (selectedTab.value == 1 &&
+              ocrTourStep == OcrTourStep.tapAddImageFab)
+            TourSpotlightOverlay(
+              targetKey: ocrFabKey,
+              stepLabel: AppTexts.tourStepLabel(1, 4),
+              title: AppTexts.ocrTourStep1Title,
+              description: AppTexts.ocrTourStep1Desc,
+              onSkip: () => ref.read(ocrTourProvider.notifier).stop(),
+            ),
+          if (selectedTab.value == 1 &&
+              ocrTourStep == OcrTourStep.tapScanButton)
+            TourSpotlightOverlay(
+              targetKey: ocrScanKey,
+              stepLabel: AppTexts.tourStepLabel(3, 4),
+              title: AppTexts.ocrTourStep3Title,
+              description: AppTexts.ocrTourStep3Desc,
+              onSkip: () => ref.read(ocrTourProvider.notifier).stop(),
+            ),
+          if (selectedTab.value == 1 &&
+              ocrTourStep == OcrTourStep.tapCopyOrClear)
+            TourSpotlightOverlay(
+              targetKey: ocrCopyKey,
+              stepLabel: AppTexts.tourStepLabel(4, 4),
+              title: AppTexts.ocrTourStep4Title,
+              description: AppTexts.ocrTourStep4Desc,
+              primaryActionLabel: AppTexts.done,
+              onPrimaryAction: () =>
+                  ref.read(ocrTourProvider.notifier).stop(),
+              onSkip: () => ref.read(ocrTourProvider.notifier).stop(),
             ),
         ],
       ),

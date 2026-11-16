@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:notes/features/notes/presentation/widgets/tour_spotlight_overlay.dart';
+import 'package:notes/core/l10n/app_texts.dart';
+import 'package:notes/core/widgets/tour_spotlight_overlay.dart';
 
 /// Colors arranged for the 3-column "Filter by colour" sheet.
 const List<int> filterGridColors = [
@@ -17,24 +18,17 @@ const List<int> selectColourCircleColors = [
   0xFFFADAE6, 0xFFF0F0F0,
 ];
 
-String formatRelativeTime(DateTime dateTime) {
-  final diff = DateTime.now().difference(dateTime);
-  if (diff.inSeconds < 60) return 'Just now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
-  if (diff.inDays == 1) return '1 day ago';
-  return '${diff.inDays} days ago';
-}
-
 /// "Filter by colour" modal bottom sheet.
 Future<void> showFilterByColourSheet({
   required BuildContext context,
   required int? selectedColor,
   required ValueChanged<int?> onSelectColor,
 }) {
+  final colors = Theme.of(context).colorScheme;
+
   return showModalBottomSheet<void>(
     context: context,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
@@ -46,12 +40,12 @@ Future<void> showFilterByColourSheet({
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Filter by colour',
+              Text(
+                AppTexts.filterByColour,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w400,
-                  color: Colors.black,
+                  color: colors.onSurface,
                 ),
               ),
               const SizedBox(height: 18),
@@ -67,18 +61,18 @@ Future<void> showFilterByColourSheet({
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colors.surface,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: Colors.black87,
+                      color: colors.outline,
                       width: selectedColor == null ? 1.8 : 1.0,
                     ),
                   ),
-                  child: const Text(
-                    'Reset',
+                  child: Text(
+                    AppTexts.reset,
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.black,
+                      color: colors.onSurface,
                     ),
                   ),
                 ),
@@ -109,9 +103,9 @@ Future<void> showFilterByColourSheet({
                         color: Color(colorVal),
                         borderRadius: BorderRadius.circular(24),
                         border: isSelected
-                            ? Border.all(color: Colors.black, width: 2.4)
+                            ? Border.all(color: colors.onSurface, width: 2.4)
                             : isWhite
-                                ? Border.all(color: Colors.black87, width: 1)
+                                ? Border.all(color: colors.outline, width: 1)
                                 : null,
                       ),
                     ),
@@ -135,9 +129,11 @@ Future<void> showNoteOptionsSheet({
   bool showTourGuide = false,
   VoidCallback? onSkipTour,
 }) {
+  final colors = Theme.of(context).colorScheme;
+
   return showModalBottomSheet<void>(
     context: context,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.surfaceContainerLow,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
@@ -152,11 +148,10 @@ Future<void> showNoteOptionsSheet({
               final entry = OverlayEntry(
                 builder: (_) => TourSpotlightOverlay(
                   targetKey: sheetContentKey,
-                  stepLabel: 'Step 5 of 6',
-                  title: 'Colours & Delete',
-                  description:
-                      'Pick a colour to organize your note or use Delete note above. Tap a colour or press "Done" to close.',
-                  primaryActionLabel: 'Done',
+                  stepLabel: AppTexts.tourStepLabel(5, 6),
+                  title: AppTexts.tourStep5Title,
+                  description: AppTexts.tourStep5Desc,
+                  primaryActionLabel: AppTexts.done,
                   onPrimaryAction: () {
                     if (sheetContext.mounted) {
                       Navigator.of(sheetContext).pop();
@@ -203,37 +198,41 @@ Future<void> showNoteOptionsSheet({
                           Icon(
                             Icons.delete_outline,
                             color: onDelete == null
-                                ? Colors.black38
-                                : Colors.black,
+                                ? colors.onSurfaceVariant
+                                : colors.onSurface,
                             size: 28,
                           ),
                           const SizedBox(width: 22),
                           Text(
-                            'Delete note',
+                            AppTexts.deleteNote,
                             style: TextStyle(
                               fontSize: 19,
                               color: onDelete == null
-                                  ? Colors.black38
-                                  : Colors.black,
+                                  ? colors.onSurfaceVariant
+                                  : colors.onSurface,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const Divider(height: 1, thickness: 1, color: Colors.black54),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: colors.outlineVariant,
+                  ),
                 ],
                 Padding(
                   padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        'Select Colour',
+                      Text(
+                        AppTexts.selectColour,
                         style: TextStyle(
                           fontSize: 19,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
+                          color: colors.onSurface,
                         ),
                       ),
                       const SizedBox(height: 22),
@@ -262,12 +261,12 @@ Future<void> showNoteOptionsSheet({
                                 color: Color(colorVal),
                                 border: isSelected
                                     ? Border.all(
-                                        color: Colors.black,
+                                        color: colors.onSurface,
                                         width: 2.5,
                                       )
                                     : isWhite
                                         ? Border.all(
-                                            color: Colors.black87,
+                                            color: colors.outline,
                                             width: 1.2,
                                           )
                                         : null,

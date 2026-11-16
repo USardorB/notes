@@ -62,10 +62,42 @@ class NotesRepository {
     unawaited(syncPendingNotes(userId));
   }
 
+  /// Reactive count of dirty local notes awaiting backend sync.
+  Stream<int> watchUnsyncedCount(String userId) {
+    return localDao.watchUnsyncedCount(userId);
+  }
+
   /// Returns the number of dirty local notes awaiting backend sync.
   Future<int> getUnsyncedCount(String userId) async {
     final dirty = await localDao.getUnsyncedNotes(userId);
     return dirty.length;
+  }
+
+  /// Pulls remote notes and reconciles them into Drift SQLite using
+  /// Last-Write-Wins (`updatedAt`), preserving any unpushed local dirty edits.
+  Future<void> pullNotes(String userId) async {
+    try {
+      final remoteNotes = await remoteApi.fetchAllNotes();
+      for (final remote in remoteNotes) {
+        final local = await localDao.getNoteById(remote.id);
+        if (local == null) {
+          await localDao.upsertNote(_toCompanion(remote, SyncStatus.synced));
+        } else if (local.syncStatus == SyncStatus.synced &&
+            remote.updatedAt.isAfter(local.updatedAt)) {
+          await localDao.upsertNote(_toCompanion(remote, SyncStatus.synced));
+        }
+      }
+    } catch (_) {
+      throw const NetworkException(
+        'Unable to pull notes. Please check your internet connection.',
+      );
+    }
+  }
+
+  /// Full two-way sync: pushes all dirty local changes first, then pulls remote.
+  Future<void> syncAll(String userId) async {
+    await syncPendingNotes(userId, throwOnError: true);
+    await pullNotes(userId);
   }
 
   /// Pushes all local dirty rows (`pendingCreate`, `pendingUpdate`, `pendingDelete`)

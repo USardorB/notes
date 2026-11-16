@@ -46,7 +46,6 @@ class _PinnedNotePainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // Note body bounds (shifted slightly bottom-right to leave room for the pin)
     final left = w * 0.14;
     final top = h * 0.24;
     final right = w * 0.90;
@@ -54,7 +53,6 @@ class _PinnedNotePainter extends CustomPainter {
     final foldSize = w * 0.22;
     const radius = 10.0;
 
-    // Note outline path with folded bottom-right corner
     final notePath = Path()
       ..moveTo(left + w * 0.22, top)
       ..lineTo(right - radius, top)
@@ -77,7 +75,6 @@ class _PinnedNotePainter extends CustomPainter {
 
     canvas.drawPath(notePath, strokePaint);
 
-    // Folded corner triangle (filled white)
     final foldPath = Path()
       ..moveTo(right - foldSize, bottom)
       ..lineTo(right - foldSize, bottom - foldSize + 4)
@@ -91,7 +88,6 @@ class _PinnedNotePainter extends CustomPainter {
       ..close();
     canvas.drawPath(foldPath, fillPaint);
 
-    // Three horizontal text lines inside the note
     final lineLeft = left + w * 0.12;
     final lineRightFull = right - w * 0.12;
     final lineRightShort = right - foldSize - w * 0.08;
@@ -108,12 +104,10 @@ class _PinnedNotePainter extends CustomPainter {
       strokePaint,
     );
 
-    // Pushpin head (circle at top-left)
     final pinCenter = Offset(w * 0.26, h * 0.14);
     final pinRadius = w * 0.11;
     canvas.drawCircle(pinCenter, pinRadius, strokePaint);
 
-    // Pushpin needle pointing down-right into the top of the note
     final pinNeedlePath = Path()
       ..moveTo(pinCenter.dx - pinRadius * 0.3, pinCenter.dy + pinRadius * 0.85)
       ..lineTo(w * 0.44, top + h * 0.13)

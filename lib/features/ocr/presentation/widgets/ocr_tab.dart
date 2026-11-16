@@ -5,19 +5,47 @@ import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:notes/app/theme/app_theme.dart';
-import 'package:notes/features/notes/presentation/controllers/ocr_controller.dart';
-import 'package:notes/features/notes/presentation/widgets/habit_dialogs.dart';
+import 'package:notes/core/l10n/app_texts.dart';
+import 'package:notes/features/ocr/presentation/controllers/ocr_controller.dart';
+import 'package:notes/features/ocr/presentation/controllers/ocr_tour_controller.dart';
+import 'package:notes/features/ocr/presentation/widgets/ocr_image_source_sheet.dart';
 
 class OcrTab extends ConsumerWidget {
-  const OcrTab({super.key});
+  final GlobalKey? addFabKey;
+  final GlobalKey? scanButtonKey;
+  final GlobalKey? copyButtonKey;
+
+  const OcrTab({
+    super.key,
+    this.addFabKey,
+    this.scanButtonKey,
+    this.copyButtonKey,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ocrState = ref.watch(ocrControllerProvider);
+    final ocrTour = ref.watch(ocrTourProvider);
+    final colors = Theme.of(context).colorScheme;
 
     Future<void> pickImage() async {
-      final source = await showOcrImageSourceSheet(context);
-      if (source == null) return;
+      final isTour = ocrTour == OcrTourStep.tapAddImageFab;
+      if (isTour) {
+        ref
+            .read(ocrTourProvider.notifier)
+            .advanceTo(OcrTourStep.selectImageSource);
+      }
+
+      final source = await showOcrImageSourceSheet(
+        context,
+        highlightSource: isTour,
+        onSkipTour: () => ref.read(ocrTourProvider.notifier).stop(),
+      );
+
+      if (source == null) {
+        if (isTour) ref.read(ocrTourProvider.notifier).stop();
+        return;
+      }
 
       final pickerSource = source == OcrImageSource.camera
           ? ImageSource.camera
@@ -25,10 +53,21 @@ class OcrTab extends ConsumerWidget {
 
       try {
         await ref.read(ocrControllerProvider.notifier).pickImage(pickerSource);
+        final hasImage = ref.read(ocrControllerProvider).imagePath != null;
+        if (isTour) {
+          if (hasImage) {
+            ref
+                .read(ocrTourProvider.notifier)
+                .advanceTo(OcrTourStep.tapScanButton);
+          } else {
+            ref.read(ocrTourProvider.notifier).stop();
+          }
+        }
       } catch (e) {
+        if (isTour) ref.read(ocrTourProvider.notifier).stop();
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not pick image: $e')),
+            SnackBar(content: Text(e.toString())),
           );
         }
       }
@@ -37,12 +76,17 @@ class OcrTab extends ConsumerWidget {
     Future<void> performScan() async {
       if (ocrState.imagePath == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please upload an image first.')),
+          SnackBar(content: Text(AppTexts.uploadImageFirst)),
         );
         return;
       }
       try {
         await ref.read(ocrControllerProvider.notifier).scanImage();
+        if (ref.read(ocrTourProvider) == OcrTourStep.tapScanButton) {
+          ref
+              .read(ocrTourProvider.notifier)
+              .advanceTo(OcrTourStep.tapCopyOrClear);
+        }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -56,9 +100,12 @@ class OcrTab extends ConsumerWidget {
       final text = ocrState.scannedText;
       if (text == null || text.isEmpty) return;
       await Clipboard.setData(ClipboardData(text: text));
+      if (ref.read(ocrTourProvider) == OcrTourStep.tapCopyOrClear) {
+        ref.read(ocrTourProvider.notifier).stop();
+      }
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Scanned text copied to clipboard.')),
+          SnackBar(content: Text(AppTexts.copiedToClipboard)),
         );
       }
     }
@@ -69,20 +116,20 @@ class OcrTab extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(24, 16, 16, 12),
           child: Row(
             children: [
-              const Text(
-                'Image to Text',
+              Text(
+                AppTexts.imageToText,
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black,
+                  color: colors.onSurface,
                 ),
               ),
               const Spacer(),
               IconButton(
-                tooltip: 'Copy scanned text',
-                icon: const Icon(
+                key: copyButtonKey,
+                icon: Icon(
                   Icons.content_copy_outlined,
-                  color: Colors.black,
+                  color: colors.onSurface,
                   size: 24,
                 ),
                 onPressed: copyText,
@@ -99,11 +146,11 @@ class OcrTab extends ConsumerWidget {
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colors.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(20),
                       border: ocrState.imagePath != null
                           ? null
-                          : Border.all(color: Colors.black87, width: 1),
+                          : Border.all(color: colors.outline, width: 1),
                     ),
                     child: ocrState.imagePath != null
                         ? ClipRRect(
@@ -115,13 +162,13 @@ class OcrTab extends ConsumerWidget {
                               height: double.infinity,
                             ),
                           )
-                        : const Center(
+                        : Center(
                             child: Text(
-                              'Upload an image\nusing the “+”\nbutton',
+                              AppTexts.uploadImagePrompt,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.black,
+                                color: colors.onSurface,
                               ),
                             ),
                           ),
@@ -133,9 +180,9 @@ class OcrTab extends ConsumerWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colors.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.black87, width: 1),
+                      border: Border.all(color: colors.outline, width: 1),
                     ),
                     child: ocrState.isScanning
                         ? const Center(
@@ -144,28 +191,28 @@ class OcrTab extends ConsumerWidget {
                             ),
                           )
                         : ocrState.scannedText != null
-                        ? SingleChildScrollView(
-                            child: SelectableText(
-                              ocrState.scannedText!.isEmpty
-                                  ? 'No text detected in this image.'
-                                  : ocrState.scannedText!,
-                              style: const TextStyle(
-                                fontSize: 17,
-                                height: 1.5,
-                                color: Colors.black,
+                            ? SingleChildScrollView(
+                                child: SelectableText(
+                                  ocrState.scannedText!.isEmpty
+                                      ? AppTexts.noTextDetected
+                                      : ocrState.scannedText!,
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    height: 1.5,
+                                    color: colors.onSurface,
+                                  ),
+                                ),
+                              )
+                            : Center(
+                                child: Text(
+                                  AppTexts.clickScanPrompt,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: colors.onSurface,
+                                  ),
+                                ),
                               ),
-                            ),
-                          )
-                        : const Center(
-                            child: Text(
-                              'Click the “Scan Image”\nbutton to perform scan',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
                   ),
                 ),
               ],
@@ -178,8 +225,8 @@ class OcrTab extends ConsumerWidget {
             children: [
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  side: const BorderSide(color: Colors.black87, width: 1),
+                  foregroundColor: colors.onSurface,
+                  side: BorderSide(color: colors.outline, width: 1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
@@ -190,13 +237,17 @@ class OcrTab extends ConsumerWidget {
                 ),
                 onPressed: () =>
                     ref.read(ocrControllerProvider.notifier).clear(),
-                child: const Text(
-                  'Clear Image',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
+                child: Text(
+                  AppTexts.clearImage,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               ElevatedButton(
+                key: scanButtonKey,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -210,13 +261,17 @@ class OcrTab extends ConsumerWidget {
                   ),
                 ),
                 onPressed: ocrState.isScanning ? null : performScan,
-                child: const Text(
-                  'Scan Image',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
+                child: Text(
+                  AppTexts.scanImage,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ),
               const Spacer(),
               FloatingActionButton(
+                key: addFabKey,
                 heroTag: 'ocr_add_fab',
                 shape: const CircleBorder(),
                 backgroundColor: AppColors.primary,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/core/l10n/app_texts.dart';
 import 'package:notes/core/utils/uuid_v7.dart';
 import 'package:notes/features/notes/domain/note.dart';
 import 'package:notes/features/notes/presentation/controllers/notes_controller.dart';
@@ -89,6 +90,16 @@ class TodoEditorScreen extends HookConsumerWidget {
       }
     }
 
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final isDefaultWhite = selectedColor.value == 0xFFFFFFFF;
+    final bgColor =
+        isDefaultWhite && isDark ? colors.surface : Color(selectedColor.value);
+    final fgColor = isDefaultWhite && isDark ? colors.onSurface : Colors.black;
+    final subtleColor =
+        isDefaultWhite && isDark ? colors.onSurfaceVariant : Colors.black54;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -97,7 +108,7 @@ class TodoEditorScreen extends HookConsumerWidget {
         }
       },
       child: Scaffold(
-        backgroundColor: Color(selectedColor.value),
+        backgroundColor: bgColor,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -107,16 +118,18 @@ class TodoEditorScreen extends HookConsumerWidget {
             onPressed: saveAndPop,
           ),
           title: Text(
-            existingNote == null ? 'Add To-do' : 'Edit To-do',
-            style: const TextStyle(
-              color: Colors.black,
+            existingNote == null
+                ? AppTexts.addTodoTitle
+                : AppTexts.editTodoTitle,
+            style: TextStyle(
+              color: fgColor,
               fontSize: 19,
               fontWeight: FontWeight.w500,
             ),
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.more_vert, color: Colors.black),
+              icon: Icon(Icons.more_vert, color: fgColor),
               onPressed: () {
                 showNoteOptionsSheet(
                   context: context,
@@ -132,11 +145,10 @@ class TodoEditorScreen extends HookConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
             children: [
-              // "+ Type something..." row matching Image 8
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.add, color: Colors.black54, size: 26),
+                    icon: Icon(Icons.add, color: subtleColor, size: 26),
                     onPressed: addTodoItem,
                   ),
                   const SizedBox(width: 4),
@@ -147,15 +159,15 @@ class TodoEditorScreen extends HookConsumerWidget {
                       textCapitalization: TextCapitalization.sentences,
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => addTodoItem(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 19,
-                        color: Colors.black87,
+                        color: fgColor,
                       ),
-                      decoration: const InputDecoration(
-                        hintText: 'Type something...',
+                      decoration: InputDecoration(
+                        hintText: AppTexts.todoInputHint,
                         hintStyle: TextStyle(
                           fontSize: 19,
-                          color: Colors.black45,
+                          color: subtleColor,
                         ),
                         border: InputBorder.none,
                       ),
@@ -164,8 +176,6 @@ class TodoEditorScreen extends HookConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-
-              // Checklist items
               for (final item in todos.value)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
@@ -174,9 +184,9 @@ class TodoEditorScreen extends HookConsumerWidget {
                       Checkbox(
                         value: item.isDone,
                         onChanged: (_) => toggleItem(item.id),
-                        activeColor: Colors.black87,
-                        side: const BorderSide(
-                          color: Colors.black87,
+                        activeColor: fgColor,
+                        side: BorderSide(
+                          color: fgColor,
                           width: 1.6,
                         ),
                         shape: RoundedRectangleBorder(
@@ -191,7 +201,7 @@ class TodoEditorScreen extends HookConsumerWidget {
                             item.text,
                             style: TextStyle(
                               fontSize: 16.5,
-                              color: Colors.black87,
+                              color: fgColor,
                               decoration: item.isDone
                                   ? TextDecoration.lineThrough
                                   : null,

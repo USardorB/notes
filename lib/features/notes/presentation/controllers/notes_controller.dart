@@ -27,6 +27,31 @@ Stream<List<Note>> notesListStream(Ref ref) {
   return ref.watch(notesRepositoryProvider).watchNotes(user.id);
 }
 
+/// Streams the number of unsynced notes for the active user.
+@riverpod
+Stream<int> unsyncedNotesCount(Ref ref) {
+  final user = ref.watch(currentUserProvider).value;
+  if (user == null) return Stream.value(0);
+  return ref.watch(notesRepositoryProvider).watchUnsyncedCount(user.id);
+}
+
+/// Dedicated two-way sync controller used by the Notes header Sync button.
+@riverpod
+class NotesSyncController extends _$NotesSyncController {
+  @override
+  FutureOr<void> build() {}
+
+  Future<void> syncNow() async {
+    final user = ref.read(currentUserProvider).value;
+    if (user == null) return;
+
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(notesRepositoryProvider).syncAll(user.id);
+    });
+  }
+}
+
 /// Holds the active view mode (single-column list vs 2-column staggered grid).
 @riverpod
 class NotesViewModeNotifier extends _$NotesViewModeNotifier {

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_new_note_short">New Note</string>
+    <string name="shortcut_new_note_long">Create a new note</string>
+    <string name="shortcut_new_todo_short">New To-do</string>
+    <string name="shortcut_new_todo_long">Create a new to-do list</string>
+    <string name="shortcut_ocr_short">Image to Text</string>
+    <string name="shortcut_ocr_long">Scan text from an image</string>
+</resources>

@@ -1,7 +1,10 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:notes/app/router/app_router.dart';
 import 'package:notes/app/theme/app_theme.dart';
-import 'package:notes/features/auth/presentation/widgets/habit_logo_mark.dart';
+import 'package:notes/core/l10n/app_texts.dart';
+import 'package:notes/core/widgets/habit_logo_mark.dart';
+import 'package:notes/features/profile/presentation/screens/legal_document_screen.dart';
 
 @RoutePage()
 class AboutScreen extends StatelessWidget {
@@ -9,12 +12,13 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colors.surface,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Top Amber Header with Back Arrow, Title, and Circular Logo
           Container(
             color: AppColors.primary,
             padding: const EdgeInsets.only(bottom: 36),
@@ -30,9 +34,9 @@ class AboutScreen extends StatelessWidget {
                         onPressed: () => context.router.maybePop(),
                       ),
                       const SizedBox(width: 8),
-                      const Text(
-                        'About',
-                        style: TextStyle(
+                      Text(
+                        AppTexts.about,
+                        style: const TextStyle(
                           fontSize: 19,
                           fontWeight: FontWeight.w500,
                           color: Colors.black,
@@ -46,46 +50,48 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
           ),
-
-          // App Metadata Rows
           Padding(
             padding: const EdgeInsets.fromLTRB(44, 32, 44, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _AboutKeyValueRow(
-                  label: 'Application',
-                  value: 'HaBIT Note',
+                _AboutKeyValueRow(
+                  label: AppTexts.application,
+                  value: AppTexts.appName,
                 ),
                 const SizedBox(height: 22),
-                const _AboutKeyValueRow(
-                  label: 'Version',
-                  value: 'V1.0.0',
+                _AboutKeyValueRow(
+                  label: AppTexts.version,
+                  value: AppTexts.appVersion,
                 ),
                 const SizedBox(height: 22),
                 InkWell(
-                  onTap: () => _showInfoSnackBar(context, 'Privacy Policy'),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4),
+                  onTap: () => context.router.push(
+                    LegalDocumentRoute(type: LegalDocumentType.privacyPolicy),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text(
-                      'Privacy Policy',
+                      AppTexts.privacyPolicy,
                       style: TextStyle(
                         fontSize: 18,
-                        color: Colors.black,
+                        color: colors.onSurface,
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 18),
                 InkWell(
-                  onTap: () => _showInfoSnackBar(context, 'Terms of Use'),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4),
+                  onTap: () => context.router.push(
+                    LegalDocumentRoute(type: LegalDocumentType.termsOfUse),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text(
-                      'Terms of Use',
+                      AppTexts.termsOfUse,
                       style: TextStyle(
                         fontSize: 18,
-                        color: Colors.black,
+                        color: colors.onSurface,
                       ),
                     ),
                   ),
@@ -95,12 +101,6 @@ class AboutScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showInfoSnackBar(BuildContext context, String title) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$title — HaBIT Note V1.0.0')),
     );
   }
 }
@@ -116,22 +116,24 @@ class _AboutKeyValueRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
-            color: Colors.black,
+            color: colors.onSurface,
           ),
         ),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 17.5,
             fontWeight: FontWeight.w300,
-            color: Colors.black87,
+            color: colors.onSurfaceVariant,
           ),
         ),
       ],

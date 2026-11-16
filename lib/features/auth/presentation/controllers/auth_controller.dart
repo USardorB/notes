@@ -100,6 +100,13 @@ class AuthController extends _$AuthController {
     return !state.hasError;
   }
 
+  /// Updates display name locally in Drift SQLite.
+  Future<void> updateDisplayName(String rawName) async {
+    final name = rawName.trim();
+    if (name.isEmpty) return;
+    await ref.read(authRepositoryProvider).updateDisplayName(name);
+  }
+
   /// Signs out immediately without syncing.
   Future<void> signOut() async {
     state = const AsyncLoading();

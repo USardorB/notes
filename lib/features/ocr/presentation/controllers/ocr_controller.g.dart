@@ -41,7 +41,7 @@ final class OcrControllerProvider
   }
 }
 
-String _$ocrControllerHash() => r'86e5f76f5efa728d63f98a8c31270fbf2d12c937';
+String _$ocrControllerHash() => r'aa83d4e9d4ab446aab9d92066bc839fc4b97e820';
 
 abstract class _$OcrController extends $Notifier<OcrState> {
   OcrState build();

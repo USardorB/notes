@@ -4,17 +4,9 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:notes/app/router/app_router.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/core/l10n/app_texts.dart';
 import 'package:notes/features/auth/presentation/controllers/auth_controller.dart';
 
-/// ============================================================================
-/// ARCHITECTURAL NOTE — HookConsumerWidget (Hooks + Riverpod in UI)
-/// ============================================================================
-/// Coming from `StatefulWidget` + `BlocConsumer`:
-/// 1. `useTextEditingController()` (from `flutter_hooks`) creates AND automatically
-///    disposes the controller when the widget unmounts—no `initState` or `dispose()`!
-/// 2. `ref.listen(...)` is your `BlocListener` (for side-effects like SnackBars
-///    and navigation).
-/// 3. `ref.watch(...)` is your `BlocBuilder` (for rebuilding UI when state changes).
 @RoutePage()
 class LoginScreen extends HookConsumerWidget {
   const LoginScreen({super.key});
@@ -24,24 +16,23 @@ class LoginScreen extends HookConsumerWidget {
     final emailController = useTextEditingController(text: 'demo@notes.app');
     final passwordController = useTextEditingController(text: 'password123');
     final obscurePassword = useState(true);
+    final colors = Theme.of(context).colorScheme;
 
-    // Equivalent to `BlocBuilder`: watches the controller's AsyncValue<void>
     final authActionState = ref.watch(authControllerProvider);
 
-    // Equivalent to `BlocListener`: listens for errors to show a SnackBar
     ref.listen<AsyncValue<void>>(authControllerProvider, (previous, next) {
       if (next.hasError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.error.toString()),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            backgroundColor: colors.error,
           ),
         );
       }
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.surfaceContainer,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -49,10 +40,10 @@ class LoginScreen extends HookConsumerWidget {
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => context.router.maybePop(),
         ),
-        title: const Text(
-          'Log In',
+        title: Text(
+          AppTexts.logIn,
           style: TextStyle(
-            color: Colors.black,
+            color: colors.onSurface,
             fontSize: 18,
             fontWeight: FontWeight.w500,
           ),
@@ -68,20 +59,20 @@ class LoginScreen extends HookConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Welcome back !',
+                    Text(
+                      AppTexts.welcomeBack,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black,
+                        color: colors.onSurface,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'Please login with your credentials',
+                    Text(
+                      AppTexts.loginSubtitle,
                       style: TextStyle(
                         fontSize: 15,
-                        color: Colors.black87,
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 52),
@@ -89,13 +80,13 @@ class LoginScreen extends HookConsumerWidget {
                       controller: emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'Email Address',
+                        hintText: AppTexts.emailAddress,
                         prefixIcon: const Icon(
                           Icons.email_outlined,
                           color: AppColors.primary,
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colors.surfaceContainerLowest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -107,7 +98,7 @@ class LoginScreen extends HookConsumerWidget {
                       controller: passwordController,
                       obscureText: obscurePassword.value,
                       decoration: InputDecoration(
-                        hintText: 'Password',
+                        hintText: AppTexts.password,
                         prefixIcon: const Icon(
                           Icons.lock_outline,
                           color: AppColors.primary,
@@ -117,13 +108,13 @@ class LoginScreen extends HookConsumerWidget {
                             obscurePassword.value
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
-                            color: Colors.black54,
+                            color: colors.onSurfaceVariant,
                           ),
                           onPressed: () =>
                               obscurePassword.value = !obscurePassword.value,
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colors.surfaceContainerLowest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -136,11 +127,11 @@ class LoginScreen extends HookConsumerWidget {
                       child: GestureDetector(
                         onTap: () =>
                             context.router.push(const ForgotPasswordRoute()),
-                        child: const Text(
-                          'Forgot Password ?',
+                        child: Text(
+                          AppTexts.forgotPasswordQuestion,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.black87,
+                            color: colors.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -149,11 +140,11 @@ class LoginScreen extends HookConsumerWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Don’t have an account yet ?',
+                        Text(
+                          AppTexts.dontHaveAccount,
                           style: TextStyle(
                             fontSize: 14.5,
-                            color: Colors.black87,
+                            color: colors.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -161,9 +152,9 @@ class LoginScreen extends HookConsumerWidget {
                           onTap: () => context.router.replace(
                             const CreateAccountRoute(),
                           ),
-                          child: const Text(
-                            'Create an account here',
-                            style: TextStyle(
+                          child: Text(
+                            AppTexts.createAccountHere,
+                            style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: AppColors.primary,
@@ -198,7 +189,7 @@ class LoginScreen extends HookConsumerWidget {
                                     );
                                 if (success && context.mounted) {
                                   await context.router.replaceAll([
-                                    const NotesListRoute(),
+                                    MainShellRoute(),
                                   ]);
                                 }
                               },
@@ -211,9 +202,9 @@ class LoginScreen extends HookConsumerWidget {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text(
-                                'LOG IN',
-                                style: TextStyle(
+                            : Text(
+                                AppTexts.logInUpper,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   letterSpacing: 0.5,
                                 ),

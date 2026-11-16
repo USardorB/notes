@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:notes/app/router/app_router.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/core/l10n/app_texts.dart';
 import 'package:notes/features/notes/domain/note.dart';
 import 'package:notes/features/notes/presentation/controllers/notes_controller.dart';
 import 'package:notes/features/notes/presentation/widgets/note_card.dart';
@@ -17,6 +18,20 @@ class NotesHomeTab extends ConsumerWidget {
     final notesAsync = ref.watch(filteredNotesProvider);
     final viewMode = ref.watch(notesViewModeProvider);
     final selectedColor = ref.watch(notesColorFilterProvider);
+    final unsyncedCount = ref.watch(unsyncedNotesCountProvider).value ?? 0;
+    final syncState = ref.watch(notesSyncControllerProvider);
+    final colors = Theme.of(context).colorScheme;
+
+    ref.listen<AsyncValue<void>>(notesSyncControllerProvider, (_, next) {
+      if (next.hasError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.error.toString()),
+            backgroundColor: colors.error,
+          ),
+        );
+      }
+    });
 
     return Column(
       children: [
@@ -24,23 +39,57 @@ class NotesHomeTab extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(24, 16, 16, 12),
           child: Row(
             children: [
-              const Text(
-                'Notes',
+              Text(
+                AppTexts.notesTitle,
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black,
+                  color: colors.onSurface,
                 ),
               ),
               const Spacer(),
+
+              // Dedicated Sync Button / Indicator:
+              // - Spins while syncing
+              // - Shows tappable sync button with count badge when unsynced > 0
+              // - Disappears completely once everything is synced
+              if (syncState.isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                )
+              else if (unsyncedCount > 0)
+                IconButton(
+                  tooltip: AppTexts.syncNotesTooltip,
+                  icon: Badge.count(
+                    count: unsyncedCount,
+                    backgroundColor: AppColors.primary,
+                    textColor: Colors.white,
+                    child: Icon(
+                      Icons.sync,
+                      color: colors.onSurface,
+                      size: 26,
+                    ),
+                  ),
+                  onPressed: () =>
+                      ref.read(notesSyncControllerProvider.notifier).syncNow(),
+                ),
+
               IconButton(
-                tooltip: 'Filter by colour',
+                tooltip: AppTexts.filterByColour,
                 icon: Badge(
                   isLabelVisible: selectedColor != null,
                   backgroundColor: AppColors.primary,
-                  child: const Icon(
+                  child: Icon(
                     Icons.palette,
-                    color: Colors.black,
+                    color: colors.onSurface,
                     size: 26,
                   ),
                 ),
@@ -55,14 +104,11 @@ class NotesHomeTab extends ConsumerWidget {
                 },
               ),
               IconButton(
-                tooltip: viewMode == NotesViewMode.list
-                    ? 'Grid view'
-                    : 'List view',
                 icon: Icon(
                   viewMode == NotesViewMode.list
                       ? Icons.grid_view_outlined
                       : Icons.drag_handle_rounded,
-                  color: Colors.black,
+                  color: colors.onSurface,
                   size: 26,
                 ),
                 onPressed: () =>
@@ -90,12 +136,12 @@ class NotesHomeTab extends ConsumerWidget {
                         const SizedBox(height: 16),
                         Text(
                           selectedColor != null
-                              ? 'No notes match this colour'
-                              : 'Create your first note !',
-                          style: const TextStyle(
+                              ? AppTexts.noNotesMatchColour
+                              : AppTexts.createFirstNote,
+                          style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w300,
-                            color: Colors.black87,
+                            color: colors.onSurface,
                           ),
                         ),
                       ],

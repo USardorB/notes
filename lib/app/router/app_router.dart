@@ -1,8 +1,9 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:notes/app/router/auth_guard.dart';
+import 'package:notes/app/shell/main_shell_screen.dart';
+import 'package:notes/core/l10n/locale_controller.dart';
 import 'package:notes/features/auth/data/auth_repository.dart';
-import 'package:notes/features/auth/presentation/screens/about_screen.dart';
 import 'package:notes/features/auth/presentation/screens/create_account_screen.dart';
 import 'package:notes/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:notes/features/auth/presentation/screens/login_screen.dart';
@@ -10,8 +11,9 @@ import 'package:notes/features/auth/presentation/screens/onboarding_screen.dart'
 import 'package:notes/features/auth/presentation/screens/splash_screen.dart';
 import 'package:notes/features/notes/domain/note.dart';
 import 'package:notes/features/notes/presentation/screens/note_editor_screen.dart';
-import 'package:notes/features/notes/presentation/screens/notes_list_screen.dart';
 import 'package:notes/features/notes/presentation/screens/todo_editor_screen.dart';
+import 'package:notes/features/profile/presentation/screens/about_screen.dart';
+import 'package:notes/features/profile/presentation/screens/legal_document_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_router.gr.dart';
@@ -36,7 +38,7 @@ part 'app_router.g.dart';
 class AppRouter extends RootStackRouter {
   final AuthGuard authGuard;
 
-  AppRouter({required this.authGuard});
+  AppRouter({required this.authGuard}) : super(navigatorKey: rootNavigatorKey);
 
   @override
   List<AutoRoute> get routes => [
@@ -66,7 +68,11 @@ class AppRouter extends RootStackRouter {
           path: '/about',
         ),
         AutoRoute(
-          page: NotesListRoute.page,
+          page: LegalDocumentRoute.page,
+          path: '/legal',
+        ),
+        AutoRoute(
+          page: MainShellRoute.page,
           path: '/notes',
           guards: [authGuard],
         ),

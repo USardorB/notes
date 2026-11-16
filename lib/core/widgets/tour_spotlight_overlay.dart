@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/core/l10n/app_texts.dart';
 
 /// Displays a dimmed spotlight overlay with a cutout around [targetKey]
 /// (if provided) and a floating coach-mark card explaining the current step.
@@ -32,17 +33,34 @@ class TourSpotlightOverlay extends HookWidget {
 
     useEffect(
       () {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        var disposed = false;
+
+        void measure() {
+          if (disposed || !context.mounted) return;
           final renderBox =
               targetKey?.currentContext?.findRenderObject() as RenderBox?;
-          if (renderBox != null && renderBox.hasSize) {
-            final offset = renderBox.localToGlobal(Offset.zero);
-            targetRect.value = (offset & renderBox.size).inflate(8);
+          final overlayBox = context.findRenderObject() as RenderBox?;
+          if (renderBox != null &&
+              renderBox.hasSize &&
+              overlayBox != null &&
+              overlayBox.hasSize) {
+            final offset =
+                renderBox.localToGlobal(Offset.zero, ancestor: overlayBox);
+            final measured = (offset & renderBox.size).inflate(8);
+            if (targetRect.value != measured) {
+              targetRect.value = measured;
+            }
           } else {
             targetRect.value = null;
           }
-        });
-        return null;
+        }
+
+        WidgetsBinding.instance.addPostFrameCallback((_) => measure());
+        Future<void>.delayed(const Duration(milliseconds: 350), measure);
+
+        return () {
+          disposed = true;
+        };
       },
       [targetKey, stepLabel],
     );
@@ -55,10 +73,6 @@ class TourSpotlightOverlay extends HookWidget {
 
     return Stack(
       children: [
-        // Dimmed backdrop with optional spotlight cutout.
-        // When `allowTargetTap` is true and a hole exists, we split the
-        // blocking regions around the hole so taps inside the hole pass
-        // directly to the target widget underneath!
         if (hole != null && allowTargetTap)
           ..._buildPassthroughBackdrop(screenSize, hole)
         else
@@ -68,8 +82,6 @@ class TourSpotlightOverlay extends HookWidget {
               child: const ColoredBox(color: Colors.black54),
             ),
           ),
-
-        // Visual spotlight cutout painter (non-interactive)
         Positioned.fill(
           child: IgnorePointer(
             child: CustomPaint(
@@ -77,8 +89,6 @@ class TourSpotlightOverlay extends HookWidget {
             ),
           ),
         ),
-
-        // Floating Coach-Mark Card
         Positioned(
           left: 20,
           right: 20,
@@ -109,7 +119,6 @@ class TourSpotlightOverlay extends HookWidget {
 
   List<Widget> _buildPassthroughBackdrop(Size screen, Rect hole) {
     return [
-      // Top region
       if (hole.top > 0)
         Positioned(
           left: 0,
@@ -121,7 +130,6 @@ class TourSpotlightOverlay extends HookWidget {
             onTap: () {},
           ),
         ),
-      // Bottom region
       if (hole.bottom < screen.height)
         Positioned(
           left: 0,
@@ -133,7 +141,6 @@ class TourSpotlightOverlay extends HookWidget {
             onTap: () {},
           ),
         ),
-      // Left region
       if (hole.left > 0)
         Positioned(
           left: 0,
@@ -145,7 +152,6 @@ class TourSpotlightOverlay extends HookWidget {
             onTap: () {},
           ),
         ),
-      // Right region
       if (hole.right < screen.width)
         Positioned(
           left: hole.right,
@@ -190,7 +196,6 @@ class _SpotlightPainter extends CustomPainter {
 
     canvas.drawPath(combined, overlayPaint);
 
-    // Subtle amber highlight ring around the target widget
     final ringPaint = Paint()
       ..color = AppColors.primary
       ..style = PaintingStyle.stroke
@@ -224,8 +229,10 @@ class TourCoachCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Material(
-      color: Colors.white,
+      color: colors.surfaceContainerLow,
       elevation: 10,
       borderRadius: BorderRadius.circular(18),
       child: Padding(
@@ -247,10 +254,10 @@ class TourCoachCard extends StatelessWidget {
                   ),
                   child: Text(
                     stepLabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: colors.onSurface,
                     ),
                   ),
                 ),
@@ -258,29 +265,29 @@ class TourCoachCard extends StatelessWidget {
                 TextButton(
                   onPressed: onSkip,
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.black54,
+                    foregroundColor: colors.onSurfaceVariant,
                     visualDensity: VisualDensity.compact,
                   ),
-                  child: const Text('Skip Tour'),
+                  child: Text(AppTexts.skipTour),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
+                color: colors.onSurface,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               description,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14.5,
                 height: 1.4,
-                color: Colors.black87,
+                color: colors.onSurface.withValues(alpha: 0.87),
               ),
             ),
             if (primaryActionLabel != null && onPrimaryAction != null) ...[

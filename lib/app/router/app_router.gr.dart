@@ -59,6 +59,53 @@ class ForgotPasswordRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [LegalDocumentScreen]
+class LegalDocumentRoute extends PageRouteInfo<LegalDocumentRouteArgs> {
+  LegalDocumentRoute({
+    Key? key,
+    required LegalDocumentType type,
+    List<PageRouteInfo>? children,
+  }) : super(
+         LegalDocumentRoute.name,
+         args: LegalDocumentRouteArgs(key: key, type: type),
+         initialChildren: children,
+       );
+
+  static const String name = 'LegalDocumentRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<LegalDocumentRouteArgs>();
+      return LegalDocumentScreen(key: args.key, type: args.type);
+    },
+  );
+}
+
+class LegalDocumentRouteArgs {
+  const LegalDocumentRouteArgs({this.key, required this.type});
+
+  final Key? key;
+
+  final LegalDocumentType type;
+
+  @override
+  String toString() {
+    return 'LegalDocumentRouteArgs{key: $key, type: $type}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! LegalDocumentRouteArgs) return false;
+    return key == other.key && type == other.type;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ type.hashCode;
+}
+
+/// generated route for
 /// [LoginScreen]
 class LoginRoute extends PageRouteInfo<void> {
   const LoginRoute({List<PageRouteInfo>? children})
@@ -72,6 +119,54 @@ class LoginRoute extends PageRouteInfo<void> {
       return const LoginScreen();
     },
   );
+}
+
+/// generated route for
+/// [MainShellScreen]
+class MainShellRoute extends PageRouteInfo<MainShellRouteArgs> {
+  MainShellRoute({Key? key, String? tab, List<PageRouteInfo>? children})
+    : super(
+        MainShellRoute.name,
+        args: MainShellRouteArgs(key: key, tab: tab),
+        rawQueryParams: {'tab': tab},
+        initialChildren: children,
+      );
+
+  static const String name = 'MainShellRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final queryParams = data.queryParams;
+      final args = data.argsAs<MainShellRouteArgs>(
+        orElse: () => MainShellRouteArgs(tab: queryParams.optString('tab')),
+      );
+      return MainShellScreen(key: args.key, tab: args.tab);
+    },
+  );
+}
+
+class MainShellRouteArgs {
+  const MainShellRouteArgs({this.key, this.tab});
+
+  final Key? key;
+
+  final String? tab;
+
+  @override
+  String toString() {
+    return 'MainShellRouteArgs{key: $key, tab: $tab}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! MainShellRouteArgs) return false;
+    return key == other.key && tab == other.tab;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ tab.hashCode;
 }
 
 /// generated route for
@@ -118,22 +213,6 @@ class NoteEditorRouteArgs {
 
   @override
   int get hashCode => key.hashCode ^ existingNote.hashCode;
-}
-
-/// generated route for
-/// [NotesListScreen]
-class NotesListRoute extends PageRouteInfo<void> {
-  const NotesListRoute({List<PageRouteInfo>? children})
-    : super(NotesListRoute.name, initialChildren: children);
-
-  static const String name = 'NotesListRoute';
-
-  static PageInfo page = PageInfo(
-    name,
-    builder: (data) {
-      return const NotesListScreen();
-    },
-  );
 }
 
 /// generated route for

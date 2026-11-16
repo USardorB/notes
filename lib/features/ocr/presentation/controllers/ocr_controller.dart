@@ -1,6 +1,6 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:notes/features/notes/data/ocr_service.dart';
+import 'package:notes/features/ocr/data/ocr_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'ocr_controller.g.dart';

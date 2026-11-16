@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:notes/app/router/app_router.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/core/l10n/app_texts.dart';
 import 'package:notes/features/notes/presentation/controllers/notes_tour_controller.dart';
+import 'package:notes/features/ocr/presentation/controllers/ocr_tour_controller.dart';
 
 class HelpTab extends ConsumerWidget {
   final ValueChanged<int> onSwitchTab;
@@ -18,25 +20,25 @@ class HelpTab extends ConsumerWidget {
         Container(
           color: AppColors.primary,
           padding: const EdgeInsets.fromLTRB(32, 18, 24, 34),
-          child: const SafeArea(
+          child: SafeArea(
             bottom: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Help',
-                  style: TextStyle(
+                  AppTexts.navHelp,
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w500,
                     color: Colors.black,
                   ),
                 ),
-                SizedBox(height: 28),
+                const SizedBox(height: 28),
                 Padding(
-                  padding: EdgeInsets.only(left: 16),
+                  padding: const EdgeInsets.only(left: 16),
                   child: Text(
-                    'User Guide',
-                    style: TextStyle(
+                    AppTexts.userGuide,
+                    style: const TextStyle(
                       fontSize: 36,
                       fontWeight: FontWeight.w400,
                       color: Colors.white,
@@ -53,7 +55,7 @@ class HelpTab extends ConsumerWidget {
             children: [
               _HelpGuideCard(
                 icon: Icons.description,
-                title: 'Notes',
+                title: AppTexts.navNotes,
                 onTap: () {
                   ref.read(notesTourProvider.notifier).start();
                   onSwitchTab(0);
@@ -62,13 +64,16 @@ class HelpTab extends ConsumerWidget {
               const SizedBox(height: 22),
               _HelpGuideCard(
                 icon: Icons.image_search,
-                title: 'OCR',
-                onTap: () => onSwitchTab(1),
+                title: AppTexts.navOcr,
+                onTap: () {
+                  ref.read(ocrTourProvider.notifier).start();
+                  onSwitchTab(1);
+                },
               ),
               const SizedBox(height: 22),
               _HelpGuideCard(
                 icon: Icons.lock,
-                title: 'Reset Password',
+                title: AppTexts.resetPassword,
                 onTap: () => context.router.push(const ForgotPasswordRoute()),
               ),
             ],
@@ -117,9 +122,9 @@ class _HelpGuideCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      'Tap to view',
-                      style: TextStyle(
+                    Text(
+                      AppTexts.tapToView,
+                      style: const TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w300,
                         color: Colors.black87,

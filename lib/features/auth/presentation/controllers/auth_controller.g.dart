@@ -105,7 +105,7 @@ final class AuthControllerProvider
   AuthController create() => AuthController();
 }
 
-String _$authControllerHash() => r'e6aa313d4268e49dadf7de6c2c73421651ec8fe9';
+String _$authControllerHash() => r'8a613b5053ab7aeb2dd34a79c64d94a3029ade5c';
 
 /// UI Controller for authentication mutations.
 

@@ -5,8 +5,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:notes/app/router/app_router.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/core/l10n/app_texts.dart';
+import 'package:notes/core/l10n/locale_controller.dart';
+import 'package:notes/core/widgets/habit_logo_mark.dart';
 import 'package:notes/features/auth/presentation/widgets/habit_drawer.dart';
-import 'package:notes/features/auth/presentation/widgets/habit_logo_mark.dart';
 
 class _OnboardingSlideData {
   final String assetPath;
@@ -22,42 +24,43 @@ class _OnboardingSlideData {
   });
 }
 
-const _slides = <_OnboardingSlideData>[
-  _OnboardingSlideData(
-    assetPath: 'assets/vectors/amico copy.svg',
-    title: 'Take Notes',
-    subtitle: 'Quickly capture what’s on your mind',
-    showWelcomeHeader: true,
-  ),
-  _OnboardingSlideData(
-    assetPath: 'assets/vectors/cuate.svg',
-    title: 'To-dos',
-    subtitle: 'List out your day-to-day tasks',
-  ),
-  _OnboardingSlideData(
-    assetPath: 'assets/vectors/amico.svg',
-    title: 'Image to Text Converter',
-    subtitle: 'Upload your images and convert to text',
-  ),
-];
-
 @RoutePage()
 class OnboardingScreen extends HookConsumerWidget {
   const OnboardingScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(appLocaleProvider);
     final pageController = usePageController();
     final currentPage = useState(0);
+    final colors = Theme.of(context).colorScheme;
+
+    final slides = <_OnboardingSlideData>[
+      _OnboardingSlideData(
+        assetPath: 'assets/vectors/amico copy.svg',
+        title: AppTexts.onboardingSlide1Title,
+        subtitle: AppTexts.onboardingSlide1Subtitle,
+        showWelcomeHeader: true,
+      ),
+      _OnboardingSlideData(
+        assetPath: 'assets/vectors/cuate.svg',
+        title: AppTexts.onboardingSlide2Title,
+        subtitle: AppTexts.onboardingSlide2Subtitle,
+      ),
+      _OnboardingSlideData(
+        assetPath: 'assets/vectors/amico.svg',
+        title: AppTexts.onboardingSlide3Title,
+        subtitle: AppTexts.onboardingSlide3Subtitle,
+      ),
+    ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.surfaceContainer,
       drawer: const HabitDrawer(),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Bar (Hamburger Menu Icon opens Material Drawer)
             Padding(
               padding: const EdgeInsets.only(left: 20, top: 12, right: 20),
               child: Align(
@@ -69,47 +72,43 @@ class OnboardingScreen extends HookConsumerWidget {
                 ),
               ),
             ),
-
-            // Swipeable Onboarding Carousel
             Expanded(
               child: PageView.builder(
                 controller: pageController,
-                itemCount: _slides.length,
+                itemCount: slides.length,
                 onPageChanged: (index) => currentPage.value = index,
                 itemBuilder: (context, index) {
-                  final slide = _slides[index];
+                  final slide = slides[index];
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 28),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header ("WELCOME TO / HaBIT Note" on first slide,
-                        // matching vertical spacing across slides)
                         SizedBox(
                           height: 68,
                           child: slide.showWelcomeHeader
-                              ? const Padding(
-                                  padding: EdgeInsets.only(top: 12),
+                              ? Padding(
+                                  padding: const EdgeInsets.only(top: 12),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'WELCOME TO',
+                                        AppTexts.welcomeTo,
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w300,
-                                          color: Colors.black87,
+                                          color: colors.onSurface,
                                           letterSpacing: 0.4,
                                         ),
                                       ),
-                                      SizedBox(height: 2),
+                                      const SizedBox(height: 2),
                                       Text(
-                                        'HaBIT Note',
+                                        AppTexts.appName,
                                         style: TextStyle(
                                           fontFamily: 'FugazOne',
                                           fontSize: 18,
-                                          color: Colors.black,
+                                          color: colors.onSurface,
                                         ),
                                       ),
                                     ],
@@ -117,8 +116,6 @@ class OnboardingScreen extends HookConsumerWidget {
                                 )
                               : null,
                         ),
-
-                        // Vector Illustration
                         Expanded(
                           child: Center(
                             child: SvgPicture.asset(
@@ -127,25 +124,22 @@ class OnboardingScreen extends HookConsumerWidget {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 16),
-
-                        // Slide Title & Subtitle
                         Text(
                           slide.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black,
+                            color: colors.onSurface,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           slide.subtitle,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14.5,
                             fontWeight: FontWeight.w400,
-                            color: Colors.black87,
+                            color: colors.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -155,11 +149,9 @@ class OnboardingScreen extends HookConsumerWidget {
                 },
               ),
             ),
-
-            // Page Indicator Pills
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_slides.length, (index) {
+              children: List.generate(slides.length, (index) {
                 final isSelected = currentPage.value == index;
                 return GestureDetector(
                   onTap: () => pageController.animateToPage(
@@ -174,24 +166,23 @@ class OnboardingScreen extends HookConsumerWidget {
                     height: 14,
                     width: isSelected ? 62 : 32,
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : Colors.white,
+                      color: isSelected
+                          ? AppColors.primary
+                          : colors.surfaceContainerLowest,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 );
               }),
             ),
-
             const SizedBox(height: 32),
-
-            // CREATE ACCOUNT & LOG IN Buttons
             Padding(
               padding: const EdgeInsets.fromLTRB(28, 0, 28, 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _HabitPillButton(
-                    label: 'CREATE ACCOUNT',
+                    label: AppTexts.createAccountUpper,
                     backgroundColor: AppColors.primary,
                     textColor: Colors.white,
                     onPressed: () =>
@@ -199,8 +190,8 @@ class OnboardingScreen extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 18),
                   _HabitPillButton(
-                    label: 'LOG IN',
-                    backgroundColor: Colors.white,
+                    label: AppTexts.logInUpper,
+                    backgroundColor: colors.surfaceContainerLowest,
                     textColor: AppColors.primary,
                     onPressed: () => context.router.push(const LoginRoute()),
                   ),
