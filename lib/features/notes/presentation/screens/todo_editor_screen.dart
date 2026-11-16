@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/core/utils/uuid_v7.dart';
 import 'package:notes/features/notes/domain/note.dart';
 import 'package:notes/features/notes/presentation/controllers/notes_controller.dart';
 import 'package:notes/features/notes/presentation/widgets/note_palette.dart';
@@ -29,7 +30,7 @@ class TodoEditorScreen extends HookConsumerWidget {
       todos.value = [
         ...todos.value,
         TodoItem(
-          id: 'todo_${DateTime.now().microsecondsSinceEpoch}',
+          id: UuidV7.generate(),
           text: text,
         ),
       ];
@@ -54,7 +55,7 @@ class TodoEditorScreen extends HookConsumerWidget {
           ? [
               ...todos.value,
               TodoItem(
-                id: 'todo_${DateTime.now().microsecondsSinceEpoch}',
+                id: UuidV7.generate(),
                 text: pendingText,
               ),
             ]

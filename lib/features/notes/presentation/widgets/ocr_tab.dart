@@ -1,42 +1,59 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/features/notes/presentation/controllers/ocr_controller.dart';
 import 'package:notes/features/notes/presentation/widgets/habit_dialogs.dart';
 
-class OcrTab extends HookConsumerWidget {
+class OcrTab extends ConsumerWidget {
   const OcrTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final hasImage = useState(false);
-    final scannedText = useState<String?>(null);
+    final ocrState = ref.watch(ocrControllerProvider);
 
     Future<void> pickImage() async {
       final source = await showOcrImageSourceSheet(context);
       if (source == null) return;
-      hasImage.value = true;
-      scannedText.value = null;
+
+      final pickerSource = source == OcrImageSource.camera
+          ? ImageSource.camera
+          : ImageSource.gallery;
+
+      try {
+        await ref.read(ocrControllerProvider.notifier).pickImage(pickerSource);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not pick image: $e')),
+          );
+        }
+      }
     }
 
-    void performScan() {
-      if (!hasImage.value) {
+    Future<void> performScan() async {
+      if (ocrState.imagePath == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please upload an image first.')),
         );
         return;
       }
-      scannedText.value = 'SMALL STEPS\nARE STILL\nPROGRESS';
-    }
-
-    void clearImage() {
-      hasImage.value = false;
-      scannedText.value = null;
+      try {
+        await ref.read(ocrControllerProvider.notifier).scanImage();
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString())),
+          );
+        }
+      }
     }
 
     Future<void> copyText() async {
-      final text = scannedText.value;
+      final text = ocrState.scannedText;
       if (text == null || text.isEmpty) return;
       await Clipboard.setData(ClipboardData(text: text));
       if (context.mounted) {
@@ -82,29 +99,20 @@ class OcrTab extends HookConsumerWidget {
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: hasImage.value
-                          ? const Color(0xFF3A0F09)
-                          : Colors.white,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      border: hasImage.value
+                      border: ocrState.imagePath != null
                           ? null
                           : Border.all(color: Colors.black87, width: 1),
                     ),
-                    child: hasImage.value
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(24),
-                              child: Text(
-                                'SMALL STEPS\nARE STILL\nPROGRESS',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w300,
-                                  letterSpacing: 2,
-                                  height: 1.4,
-                                  color: Colors.white70,
-                                ),
-                              ),
+                    child: ocrState.imagePath != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.file(
+                              File(ocrState.imagePath!),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
                             ),
                           )
                         : const Center(
@@ -129,13 +137,20 @@ class OcrTab extends HookConsumerWidget {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.black87, width: 1),
                     ),
-                    child: scannedText.value != null
-                        ? Center(
+                    child: ocrState.isScanning
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                            ),
+                          )
+                        : ocrState.scannedText != null
+                        ? SingleChildScrollView(
                             child: SelectableText(
-                              scannedText.value!,
-                              textAlign: TextAlign.center,
+                              ocrState.scannedText!.isEmpty
+                                  ? 'No text detected in this image.'
+                                  : ocrState.scannedText!,
                               style: const TextStyle(
-                                fontSize: 18,
+                                fontSize: 17,
                                 height: 1.5,
                                 color: Colors.black,
                               ),
@@ -173,7 +188,8 @@ class OcrTab extends HookConsumerWidget {
                     vertical: 12,
                   ),
                 ),
-                onPressed: clearImage,
+                onPressed: () =>
+                    ref.read(ocrControllerProvider.notifier).clear(),
                 child: const Text(
                   'Clear Image',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
@@ -193,7 +209,7 @@ class OcrTab extends HookConsumerWidget {
                     vertical: 12,
                   ),
                 ),
-                onPressed: performScan,
+                onPressed: ocrState.isScanning ? null : performScan,
                 child: const Text(
                   'Scan Image',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400),

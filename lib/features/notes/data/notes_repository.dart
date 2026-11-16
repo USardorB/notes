@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:notes/core/database/app_database.dart';
+import 'package:notes/core/error/app_exception.dart';
 import 'package:notes/core/sync/sync_status.dart';
 import 'package:notes/features/notes/data/local/notes_local_dao.dart';
 import 'package:notes/features/notes/data/remote/notes_remote_api.dart';
@@ -61,9 +62,21 @@ class NotesRepository {
     unawaited(syncPendingNotes(userId));
   }
 
+  /// Returns the number of dirty local notes awaiting backend sync.
+  Future<int> getUnsyncedCount(String userId) async {
+    final dirty = await localDao.getUnsyncedNotes(userId);
+    return dirty.length;
+  }
+
   /// Pushes all local dirty rows (`pendingCreate`, `pendingUpdate`, `pendingDelete`)
   /// to the remote server and reconciles their status in Drift.
-  Future<void> syncPendingNotes(String userId) async {
+  /// When [throwOnError] is true (e.g. force-sync before logout), throws
+  /// [NetworkException] on failure so the caller can abort logout and prevent
+  /// data loss.
+  Future<void> syncPendingNotes(
+    String userId, {
+    bool throwOnError = false,
+  }) async {
     final dirtyRows = await localDao.getUnsyncedNotes(userId);
 
     for (final row in dirtyRows) {
@@ -83,8 +96,12 @@ class NotesRepository {
             break;
         }
       } catch (_) {
+        if (throwOnError) {
+          throw const NetworkException(
+            'Unable to sync notes. Please connect to the internet and try again.',
+          );
+        }
         // Offline or server unreachable: keep row in its `pending*` state.
-        // It will automatically be retried on the next connectivity event.
       }
     }
   }

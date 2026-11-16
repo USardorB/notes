@@ -1,5 +1,6 @@
 import 'package:notes/core/error/app_exception.dart';
 import 'package:notes/features/auth/application/login_usecase.dart';
+import 'package:notes/features/auth/application/logout_usecase.dart';
 import 'package:notes/features/auth/data/auth_repository.dart';
 import 'package:notes/features/auth/domain/auth_user.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -9,37 +10,26 @@ part 'auth_controller.g.dart';
 /// ============================================================================
 /// ARCHITECTURAL NOTE — From Bloc to Riverpod (Queries vs Commands)
 /// ============================================================================
-/// Coming from Bloc, you are used to packing everything into a single `AuthBloc`
-/// with `AuthInitial`, `AuthLoading`, `AuthAuthenticated`, `AuthError`.
-///
-/// THE PROBLEM WITH SINGLE-STATE BLOCS:
-/// When the user is already logged in (or logging in) and an action fails,
-/// emitting `AuthError` often wipes out the current data state unless you
-/// manually copy fields across states.
-///
-/// HOW RIVERPOD SOLVES THIS CLEANLY:
 /// We separate:
 ///   1. **The Reactive Data Stream (`currentUserProvider`)**: Watches Drift SQLite
-///      directly. Whenever the `AuthSessions` table changes, every listener in
-///      the app automatically rebuilds!
+///      directly. Whenever the `AuthSessions` table changes (including when a
+///      local account transitions from `pendingCreate` -> `synced`), every
+///      listener in the app automatically rebuilds!
 ///   2. **The Action Controller (`AuthController`)**: Tracks the lifecycle of user
-///      button clicks (`signIn`, `signUp`, `resetPassword`, `signOut`) using
-///      `AsyncValue<void>` (`AsyncLoading`, `AsyncData`, `AsyncError`).
+///      button clicks (`signIn`, `signUp`, `resetPassword`, `syncAndSignOut`,
+///      `signOut`) using `AsyncValue<void>`.
 @Riverpod(keepAlive: true)
 Stream<AuthUser?> currentUser(Ref ref) {
-  // Direct Reactive Read: No pass-through UseCase needed!
   return ref.watch(authRepositoryProvider).watchCurrentUser();
 }
 
-/// UI Controller for authentication mutations (Sign In / Sign Up / Reset / Sign Out).
+/// UI Controller for authentication mutations.
 @riverpod
 class AuthController extends _$AuthController {
   @override
-  FutureOr<void> build() {
-    // Initial state is idle (`AsyncData(null)`).
-  }
+  FutureOr<void> build() {}
 
-  /// Invoked when the user taps "LOG IN" on the LoginScreen.
+  /// **Online-Only** Sign In.
   Future<bool> signIn({
     required String email,
     required String password,
@@ -54,7 +44,7 @@ class AuthController extends _$AuthController {
     return !state.hasError;
   }
 
-  /// Invoked when the user taps "CREATE ACCOUNT" on the CreateAccountScreen.
+  /// **Offline-First** Create Account.
   Future<bool> signUp({
     required String displayName,
     required String email,
@@ -73,7 +63,6 @@ class AuthController extends _$AuthController {
     return !state.hasError;
   }
 
-  /// Invoked when the user taps "SUBMIT" on the ForgotPasswordScreen.
   Future<bool> requestPasswordReset({required String rawEmail}) async {
     final email = rawEmail.trim().toLowerCase();
     state = const AsyncLoading();
@@ -88,11 +77,34 @@ class AuthController extends _$AuthController {
     return !state.hasError;
   }
 
-  /// Invoked when the user taps "Sign Out".
+  /// Attempts to sync a local offline-created account to the backend.
+  Future<bool> syncAccountNow() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(authRepositoryProvider).syncPendingAccountStrict();
+    });
+    return !state.hasError;
+  }
+
+  Future<UnsyncedSummary> checkUnsyncedData() {
+    return ref.read(logoutUseCaseProvider).checkUnsyncedData();
+  }
+
+  /// Force-syncs account & dirty notes before signing out.
+  /// Returns `false` and populates `state.error` if offline.
+  Future<bool> syncAndSignOut() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(logoutUseCaseProvider).syncAndSignOut();
+    });
+    return !state.hasError;
+  }
+
+  /// Signs out immediately without syncing.
   Future<void> signOut() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(authRepositoryProvider).signOut();
+      await ref.read(logoutUseCaseProvider).forceSignOut();
     });
   }
 }

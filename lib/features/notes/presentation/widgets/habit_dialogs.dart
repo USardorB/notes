@@ -274,3 +274,126 @@ Future<bool> showHabitConfirmDialog({
   );
   return confirmed ?? false;
 }
+
+enum UnsyncedLogoutAction { cancel, syncAndLogout, discardAndLogout }
+
+/// Pre-logout prompt shown when local account or notes have not been synced.
+Future<UnsyncedLogoutAction> showUnsyncedLogoutDialog({
+  required BuildContext context,
+  required bool hasUnsyncedAccount,
+  required int unsyncedNotesCount,
+}) async {
+  final details = <String>[
+    if (hasUnsyncedAccount) 'your local account',
+    if (unsyncedNotesCount > 0)
+      '$unsyncedNotesCount unsynced ${unsyncedNotesCount == 1 ? 'note' : 'notes'}',
+  ].join(' and ');
+
+  final result = await showDialog<UnsyncedLogoutAction>(
+    context: context,
+    builder: (dialogContext) {
+      return Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(
+                    Icons.cloud_off_outlined,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Unsynced Data',
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'You still have $details stored only on this device. Sync with the internet before logging out to avoid losing your data.',
+                style: const TextStyle(
+                  fontSize: 15,
+                  height: 1.4,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 46,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.black54,
+                          side: const BorderSide(color: Color(0xFFD0D5DD)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () => Navigator.of(dialogContext)
+                            .pop(UnsyncedLogoutAction.cancel),
+                        child: const Text('No', style: TextStyle(fontSize: 16)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 46,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () => Navigator.of(dialogContext)
+                            .pop(UnsyncedLogoutAction.syncAndLogout),
+                        child: const Text(
+                          'Sync & Log out',
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(dialogContext)
+                      .pop(UnsyncedLogoutAction.discardAndLogout),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.redAccent,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  child: const Text('Log out without syncing'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+  return result ?? UnsyncedLogoutAction.cancel;
+}

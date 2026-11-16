@@ -36,6 +36,13 @@ class AuthUserMapper extends ClassMapperBase<AuthUser> {
     'accessToken',
     _$accessToken,
   );
+  static SyncStatus _$syncStatus(AuthUser v) => v.syncStatus;
+  static const Field<AuthUser, SyncStatus> _f$syncStatus = Field(
+    'syncStatus',
+    _$syncStatus,
+    opt: true,
+    def: SyncStatus.synced,
+  );
 
   @override
   final MappableFields<AuthUser> fields = const {
@@ -43,6 +50,7 @@ class AuthUserMapper extends ClassMapperBase<AuthUser> {
     #email: _f$email,
     #displayName: _f$displayName,
     #accessToken: _f$accessToken,
+    #syncStatus: _f$syncStatus,
   };
 
   static AuthUser _instantiate(DecodingData data) {
@@ -51,6 +59,7 @@ class AuthUserMapper extends ClassMapperBase<AuthUser> {
       email: data.dec(_f$email),
       displayName: data.dec(_f$displayName),
       accessToken: data.dec(_f$accessToken),
+      syncStatus: data.dec(_f$syncStatus),
     );
   }
 
@@ -116,6 +125,7 @@ abstract class AuthUserCopyWith<$R, $In extends AuthUser, $Out>
     String? email,
     String? displayName,
     String? accessToken,
+    SyncStatus? syncStatus,
   });
   AuthUserCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -134,12 +144,14 @@ class _AuthUserCopyWithImpl<$R, $Out>
     String? email,
     String? displayName,
     String? accessToken,
+    SyncStatus? syncStatus,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
       if (email != null) #email: email,
       if (displayName != null) #displayName: displayName,
       if (accessToken != null) #accessToken: accessToken,
+      if (syncStatus != null) #syncStatus: syncStatus,
     }),
   );
   @override
@@ -148,6 +160,7 @@ class _AuthUserCopyWithImpl<$R, $Out>
     email: data.get(#email, or: $value.email),
     displayName: data.get(#displayName, or: $value.displayName),
     accessToken: data.get(#accessToken, or: $value.accessToken),
+    syncStatus: data.get(#syncStatus, or: $value.syncStatus),
   );
 
   @override
@@ -298,6 +311,8 @@ class RegisterRequestMapper extends ClassMapperBase<RegisterRequest> {
   @override
   final String id = 'RegisterRequest';
 
+  static String _$id(RegisterRequest v) => v.id;
+  static const Field<RegisterRequest, String> _f$id = Field('id', _$id);
   static String _$displayName(RegisterRequest v) => v.displayName;
   static const Field<RegisterRequest, String> _f$displayName = Field(
     'displayName',
@@ -316,6 +331,7 @@ class RegisterRequestMapper extends ClassMapperBase<RegisterRequest> {
 
   @override
   final MappableFields<RegisterRequest> fields = const {
+    #id: _f$id,
     #displayName: _f$displayName,
     #email: _f$email,
     #password: _f$password,
@@ -323,6 +339,7 @@ class RegisterRequestMapper extends ClassMapperBase<RegisterRequest> {
 
   static RegisterRequest _instantiate(DecodingData data) {
     return RegisterRequest(
+      id: data.dec(_f$id),
       displayName: data.dec(_f$displayName),
       email: data.dec(_f$email),
       password: data.dec(_f$password),
@@ -391,7 +408,7 @@ extension RegisterRequestValueCopy<$R, $Out>
 
 abstract class RegisterRequestCopyWith<$R, $In extends RegisterRequest, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? displayName, String? email, String? password});
+  $R call({String? id, String? displayName, String? email, String? password});
   RegisterRequestCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -406,15 +423,18 @@ class _RegisterRequestCopyWithImpl<$R, $Out>
   late final ClassMapperBase<RegisterRequest> $mapper =
       RegisterRequestMapper.ensureInitialized();
   @override
-  $R call({String? displayName, String? email, String? password}) => $apply(
-    FieldCopyWithData({
-      if (displayName != null) #displayName: displayName,
-      if (email != null) #email: email,
-      if (password != null) #password: password,
-    }),
-  );
+  $R call({String? id, String? displayName, String? email, String? password}) =>
+      $apply(
+        FieldCopyWithData({
+          if (id != null) #id: id,
+          if (displayName != null) #displayName: displayName,
+          if (email != null) #email: email,
+          if (password != null) #password: password,
+        }),
+      );
   @override
   RegisterRequest $make(CopyWithData data) => RegisterRequest(
+    id: data.get(#id, or: $value.id),
     displayName: data.get(#displayName, or: $value.displayName),
     email: data.get(#email, or: $value.email),
     password: data.get(#password, or: $value.password),

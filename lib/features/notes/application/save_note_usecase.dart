@@ -1,5 +1,6 @@
 import 'package:notes/core/error/app_exception.dart';
 import 'package:notes/core/sync/sync_status.dart';
+import 'package:notes/core/utils/uuid_v7.dart';
 import 'package:notes/features/auth/data/auth_repository.dart';
 import 'package:notes/features/notes/data/notes_repository.dart';
 import 'package:notes/features/notes/domain/note.dart';
@@ -66,7 +67,7 @@ class SaveNoteUseCase {
     };
 
     final note = Note(
-      id: existingNote?.id ?? 'note_${DateTime.now().microsecondsSinceEpoch}',
+      id: existingNote?.id ?? UuidV7.generate(),
       userId: currentUser.id,
       title: title,
       content: content,

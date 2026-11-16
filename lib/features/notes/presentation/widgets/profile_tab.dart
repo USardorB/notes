@@ -13,8 +13,21 @@ class ProfileTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider).value;
+    final authActionState = ref.watch(authControllerProvider);
     final themeMode = ref.watch(appThemeModeProvider);
     final isDark = themeMode == ThemeMode.dark;
+    final isUnsyncedAccount = user != null && user.syncStatus.needsSync;
+
+    ref.listen<AsyncValue<void>>(authControllerProvider, (_, next) {
+      if (next.hasError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.error.toString()),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -88,6 +101,51 @@ class ProfileTab extends ConsumerWidget {
                             color: Colors.black87,
                           ),
                         ),
+                        if (isUnsyncedAccount) ...[
+                          const SizedBox(height: 8),
+                          InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: authActionState.isLoading
+                                ? null
+                                : () => ref
+                                    .read(authControllerProvider.notifier)
+                                    .syncAccountNow(),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppColors.primary,
+                                  width: 1,
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.cloud_off_outlined,
+                                    size: 14,
+                                    color: Colors.black87,
+                                  ),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Local Account • Not Synced',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -166,33 +224,76 @@ class ProfileTab extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              onPressed: () async {
-                final confirmed = await showHabitConfirmDialog(
-                  context: context,
-                  title: 'Log out',
-                  message: 'Are you sure you want to log out?',
-                  confirmLabel: 'Log out',
-                );
-                if (!confirmed) return;
-
-                await ref.read(authControllerProvider.notifier).signOut();
-                if (context.mounted) {
-                  await context.router.replaceAll([const OnboardingRoute()]);
-                }
-              },
+              onPressed: authActionState.isLoading
+                  ? null
+                  : () => _handleLogout(context, ref),
               icon: const Icon(Icons.logout, size: 26),
-              label: const Text(
-                'LOG OUT',
-                style: TextStyle(
-                  fontSize: 16,
-                  letterSpacing: 0.5,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
+              label: authActionState.isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      'LOG OUT',
+                      style: TextStyle(
+                        fontSize: 16,
+                        letterSpacing: 0.5,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
             ),
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
+    final notifier = ref.read(authControllerProvider.notifier);
+    final summary = await notifier.checkUnsyncedData();
+
+    if (!context.mounted) return;
+
+    if (summary.hasAnyUnsynced) {
+      final action = await showUnsyncedLogoutDialog(
+        context: context,
+        hasUnsyncedAccount: summary.hasUnsyncedAccount,
+        unsyncedNotesCount: summary.unsyncedNotesCount,
+      );
+      if (!context.mounted) return;
+
+      switch (action) {
+        case UnsyncedLogoutAction.cancel:
+          return;
+        case UnsyncedLogoutAction.syncAndLogout:
+          final synced = await notifier.syncAndSignOut();
+          if (synced && context.mounted) {
+            await context.router.replaceAll([const OnboardingRoute()]);
+          }
+        case UnsyncedLogoutAction.discardAndLogout:
+          await notifier.signOut();
+          if (context.mounted) {
+            await context.router.replaceAll([const OnboardingRoute()]);
+          }
+      }
+      return;
+    }
+
+    final confirmed = await showHabitConfirmDialog(
+      context: context,
+      title: 'Log out',
+      message: 'Are you sure you want to log out?',
+      confirmLabel: 'Log out',
+    );
+    if (!confirmed) return;
+
+    await notifier.signOut();
+    if (context.mounted) {
+      await context.router.replaceAll([const OnboardingRoute()]);
+    }
   }
 }

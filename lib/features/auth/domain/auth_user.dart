@@ -1,4 +1,5 @@
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:notes/core/sync/sync_status.dart';
 
 part 'auth_user.mapper.dart';
 
@@ -22,6 +23,7 @@ class AuthUser({
   required final String email,
   required final String displayName,
   required final String accessToken,
+  final SyncStatus syncStatus = SyncStatus.synced,
 }) with AuthUserMappable;
 
 /// Request payload for `POST /auth/login`.
@@ -34,6 +36,7 @@ class LoginRequest({
 /// Request payload for `POST /auth/register`.
 @MappableClass()
 class RegisterRequest({
+  required final String id,
   required final String displayName,
   required final String email,
   required final String password,

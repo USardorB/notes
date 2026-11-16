@@ -49,6 +49,16 @@ class $AuthSessionsTable extends AuthSessions
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  @override
+  late final GeneratedColumnWithTypeConverter<SyncStatus, String> syncStatus =
+      GeneratedColumn<String>(
+        'sync_status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: Constant(SyncStatus.synced.name),
+      ).withConverter<SyncStatus>($AuthSessionsTable.$convertersyncStatus);
   static const VerificationMeta _authenticatedAtMeta = const VerificationMeta(
     'authenticatedAt',
   );
@@ -67,6 +77,7 @@ class $AuthSessionsTable extends AuthSessions
     email,
     displayName,
     accessToken,
+    syncStatus,
     authenticatedAt,
   ];
   @override
@@ -155,6 +166,12 @@ class $AuthSessionsTable extends AuthSessions
         DriftSqlType.string,
         data['${effectivePrefix}access_token'],
       )!,
+      syncStatus: $AuthSessionsTable.$convertersyncStatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}sync_status'],
+        )!,
+      ),
       authenticatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}authenticated_at'],
@@ -166,10 +183,13 @@ class $AuthSessionsTable extends AuthSessions
   $AuthSessionsTable createAlias(String alias) {
     return $AuthSessionsTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<SyncStatus, String, String> $convertersyncStatus =
+      const EnumNameConverter<SyncStatus>(SyncStatus.values);
 }
 
 class AuthSession extends DataClass implements Insertable<AuthSession> {
-  /// User ID from backend (Primary Key).
+  /// Client-generated UUIDv7 or backend user ID (Primary Key).
   final String userId;
 
   /// Authenticated user's email address.
@@ -178,10 +198,11 @@ class AuthSession extends DataClass implements Insertable<AuthSession> {
   /// Display name.
   final String displayName;
 
-  /// Access token (Note: in high-security production apps, sensitive raw tokens
-  /// can be paired with `flutter_secure_storage`, while user profile & session
-  /// metadata live reactively in Drift).
+  /// Access token (empty or local-only until synced with backend).
   final String accessToken;
+
+  /// Tracks whether an offline-created account has been synced to the backend.
+  final SyncStatus syncStatus;
 
   /// Timestamp when the session was last refreshed.
   final DateTime authenticatedAt;
@@ -190,6 +211,7 @@ class AuthSession extends DataClass implements Insertable<AuthSession> {
     required this.email,
     required this.displayName,
     required this.accessToken,
+    required this.syncStatus,
     required this.authenticatedAt,
   });
   @override
@@ -199,6 +221,11 @@ class AuthSession extends DataClass implements Insertable<AuthSession> {
     map['email'] = Variable<String>(email);
     map['display_name'] = Variable<String>(displayName);
     map['access_token'] = Variable<String>(accessToken);
+    {
+      map['sync_status'] = Variable<String>(
+        $AuthSessionsTable.$convertersyncStatus.toSql(syncStatus),
+      );
+    }
     map['authenticated_at'] = Variable<DateTime>(authenticatedAt);
     return map;
   }
@@ -209,6 +236,7 @@ class AuthSession extends DataClass implements Insertable<AuthSession> {
       email: Value(email),
       displayName: Value(displayName),
       accessToken: Value(accessToken),
+      syncStatus: Value(syncStatus),
       authenticatedAt: Value(authenticatedAt),
     );
   }
@@ -223,6 +251,9 @@ class AuthSession extends DataClass implements Insertable<AuthSession> {
       email: serializer.fromJson<String>(json['email']),
       displayName: serializer.fromJson<String>(json['displayName']),
       accessToken: serializer.fromJson<String>(json['accessToken']),
+      syncStatus: $AuthSessionsTable.$convertersyncStatus.fromJson(
+        serializer.fromJson<String>(json['syncStatus']),
+      ),
       authenticatedAt: serializer.fromJson<DateTime>(json['authenticatedAt']),
     );
   }
@@ -234,6 +265,9 @@ class AuthSession extends DataClass implements Insertable<AuthSession> {
       'email': serializer.toJson<String>(email),
       'displayName': serializer.toJson<String>(displayName),
       'accessToken': serializer.toJson<String>(accessToken),
+      'syncStatus': serializer.toJson<String>(
+        $AuthSessionsTable.$convertersyncStatus.toJson(syncStatus),
+      ),
       'authenticatedAt': serializer.toJson<DateTime>(authenticatedAt),
     };
   }
@@ -243,12 +277,14 @@ class AuthSession extends DataClass implements Insertable<AuthSession> {
     String? email,
     String? displayName,
     String? accessToken,
+    SyncStatus? syncStatus,
     DateTime? authenticatedAt,
   }) => AuthSession(
     userId: userId ?? this.userId,
     email: email ?? this.email,
     displayName: displayName ?? this.displayName,
     accessToken: accessToken ?? this.accessToken,
+    syncStatus: syncStatus ?? this.syncStatus,
     authenticatedAt: authenticatedAt ?? this.authenticatedAt,
   );
   AuthSession copyWithCompanion(AuthSessionsCompanion data) {
@@ -261,6 +297,9 @@ class AuthSession extends DataClass implements Insertable<AuthSession> {
       accessToken: data.accessToken.present
           ? data.accessToken.value
           : this.accessToken,
+      syncStatus: data.syncStatus.present
+          ? data.syncStatus.value
+          : this.syncStatus,
       authenticatedAt: data.authenticatedAt.present
           ? data.authenticatedAt.value
           : this.authenticatedAt,
@@ -274,14 +313,21 @@ class AuthSession extends DataClass implements Insertable<AuthSession> {
           ..write('email: $email, ')
           ..write('displayName: $displayName, ')
           ..write('accessToken: $accessToken, ')
+          ..write('syncStatus: $syncStatus, ')
           ..write('authenticatedAt: $authenticatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(userId, email, displayName, accessToken, authenticatedAt);
+  int get hashCode => Object.hash(
+    userId,
+    email,
+    displayName,
+    accessToken,
+    syncStatus,
+    authenticatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -290,6 +336,7 @@ class AuthSession extends DataClass implements Insertable<AuthSession> {
           other.email == this.email &&
           other.displayName == this.displayName &&
           other.accessToken == this.accessToken &&
+          other.syncStatus == this.syncStatus &&
           other.authenticatedAt == this.authenticatedAt);
 }
 
@@ -298,6 +345,7 @@ class AuthSessionsCompanion extends UpdateCompanion<AuthSession> {
   final Value<String> email;
   final Value<String> displayName;
   final Value<String> accessToken;
+  final Value<SyncStatus> syncStatus;
   final Value<DateTime> authenticatedAt;
   final Value<int> rowid;
   const AuthSessionsCompanion({
@@ -305,6 +353,7 @@ class AuthSessionsCompanion extends UpdateCompanion<AuthSession> {
     this.email = const Value.absent(),
     this.displayName = const Value.absent(),
     this.accessToken = const Value.absent(),
+    this.syncStatus = const Value.absent(),
     this.authenticatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -313,6 +362,7 @@ class AuthSessionsCompanion extends UpdateCompanion<AuthSession> {
     required String email,
     required String displayName,
     required String accessToken,
+    this.syncStatus = const Value.absent(),
     required DateTime authenticatedAt,
     this.rowid = const Value.absent(),
   }) : userId = Value(userId),
@@ -325,6 +375,7 @@ class AuthSessionsCompanion extends UpdateCompanion<AuthSession> {
     Expression<String>? email,
     Expression<String>? displayName,
     Expression<String>? accessToken,
+    Expression<String>? syncStatus,
     Expression<DateTime>? authenticatedAt,
     Expression<int>? rowid,
   }) {
@@ -333,6 +384,7 @@ class AuthSessionsCompanion extends UpdateCompanion<AuthSession> {
       if (email != null) 'email': email,
       if (displayName != null) 'display_name': displayName,
       if (accessToken != null) 'access_token': accessToken,
+      if (syncStatus != null) 'sync_status': syncStatus,
       if (authenticatedAt != null) 'authenticated_at': authenticatedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -343,6 +395,7 @@ class AuthSessionsCompanion extends UpdateCompanion<AuthSession> {
     Value<String>? email,
     Value<String>? displayName,
     Value<String>? accessToken,
+    Value<SyncStatus>? syncStatus,
     Value<DateTime>? authenticatedAt,
     Value<int>? rowid,
   }) {
@@ -351,6 +404,7 @@ class AuthSessionsCompanion extends UpdateCompanion<AuthSession> {
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       accessToken: accessToken ?? this.accessToken,
+      syncStatus: syncStatus ?? this.syncStatus,
       authenticatedAt: authenticatedAt ?? this.authenticatedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -371,6 +425,11 @@ class AuthSessionsCompanion extends UpdateCompanion<AuthSession> {
     if (accessToken.present) {
       map['access_token'] = Variable<String>(accessToken.value);
     }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<String>(
+        $AuthSessionsTable.$convertersyncStatus.toSql(syncStatus.value),
+      );
+    }
     if (authenticatedAt.present) {
       map['authenticated_at'] = Variable<DateTime>(authenticatedAt.value);
     }
@@ -387,6 +446,7 @@ class AuthSessionsCompanion extends UpdateCompanion<AuthSession> {
           ..write('email: $email, ')
           ..write('displayName: $displayName, ')
           ..write('accessToken: $accessToken, ')
+          ..write('syncStatus: $syncStatus, ')
           ..write('authenticatedAt: $authenticatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -992,6 +1052,7 @@ typedef $$AuthSessionsTableCreateCompanionBuilder =
       required String email,
       required String displayName,
       required String accessToken,
+      Value<SyncStatus> syncStatus,
       required DateTime authenticatedAt,
       Value<int> rowid,
     });
@@ -1001,6 +1062,7 @@ typedef $$AuthSessionsTableUpdateCompanionBuilder =
       Value<String> email,
       Value<String> displayName,
       Value<String> accessToken,
+      Value<SyncStatus> syncStatus,
       Value<DateTime> authenticatedAt,
       Value<int> rowid,
     });
@@ -1032,6 +1094,12 @@ class $$AuthSessionsTableFilterComposer
   ColumnFilters<String> get accessToken => $composableBuilder(
     column: $table.accessToken,
     builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<SyncStatus, SyncStatus, String>
+  get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnFilters<DateTime> get authenticatedAt => $composableBuilder(
@@ -1069,6 +1137,11 @@ class $$AuthSessionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get authenticatedAt => $composableBuilder(
     column: $table.authenticatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -1099,6 +1172,12 @@ class $$AuthSessionsTableAnnotationComposer
     column: $table.accessToken,
     builder: (column) => column,
   );
+
+  GeneratedColumnWithTypeConverter<SyncStatus, String> get syncStatus =>
+      $composableBuilder(
+        column: $table.syncStatus,
+        builder: (column) => column,
+      );
 
   GeneratedColumn<DateTime> get authenticatedAt => $composableBuilder(
     column: $table.authenticatedAt,
@@ -1141,6 +1220,7 @@ class $$AuthSessionsTableTableManager
                 Value<String> email = const Value.absent(),
                 Value<String> displayName = const Value.absent(),
                 Value<String> accessToken = const Value.absent(),
+                Value<SyncStatus> syncStatus = const Value.absent(),
                 Value<DateTime> authenticatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AuthSessionsCompanion(
@@ -1148,6 +1228,7 @@ class $$AuthSessionsTableTableManager
                 email: email,
                 displayName: displayName,
                 accessToken: accessToken,
+                syncStatus: syncStatus,
                 authenticatedAt: authenticatedAt,
                 rowid: rowid,
               ),
@@ -1157,6 +1238,7 @@ class $$AuthSessionsTableTableManager
                 required String email,
                 required String displayName,
                 required String accessToken,
+                Value<SyncStatus> syncStatus = const Value.absent(),
                 required DateTime authenticatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => AuthSessionsCompanion.insert(
@@ -1164,6 +1246,7 @@ class $$AuthSessionsTableTableManager
                 email: email,
                 displayName: displayName,
                 accessToken: accessToken,
+                syncStatus: syncStatus,
                 authenticatedAt: authenticatedAt,
                 rowid: rowid,
               ),

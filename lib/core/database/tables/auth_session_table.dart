@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:notes/core/sync/sync_status.dart';
 
 /// ============================================================================
 /// ARCHITECTURAL NOTE — Drift vs SharedPreferences for Auth Session
@@ -15,7 +16,7 @@ import 'package:drift/drift.dart';
 ///    data on logout happens in a single atomic SQLite transaction.
 /// 3. Type safety: Schema migrations and typed columns prevent runtime cast bugs.
 class AuthSessions extends Table {
-  /// User ID from backend (Primary Key).
+  /// Client-generated UUIDv7 or backend user ID (Primary Key).
   TextColumn get userId => text()();
 
   /// Authenticated user's email address.
@@ -24,10 +25,12 @@ class AuthSessions extends Table {
   /// Display name.
   TextColumn get displayName => text()();
 
-  /// Access token (Note: in high-security production apps, sensitive raw tokens
-  /// can be paired with `flutter_secure_storage`, while user profile & session
-  /// metadata live reactively in Drift).
+  /// Access token (empty or local-only until synced with backend).
   TextColumn get accessToken => text()();
+
+  /// Tracks whether an offline-created account has been synced to the backend.
+  TextColumn get syncStatus =>
+      textEnum<SyncStatus>().withDefault(Constant(SyncStatus.synced.name))();
 
   /// Timestamp when the session was last refreshed.
   DateTimeColumn get authenticatedAt => dateTime()();

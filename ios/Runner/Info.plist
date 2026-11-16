@@ -49,6 +49,10 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>HaBIT Note uses the camera to capture images for offline text recognition.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>HaBIT Note accesses your photo library to pick images for offline text recognition.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
