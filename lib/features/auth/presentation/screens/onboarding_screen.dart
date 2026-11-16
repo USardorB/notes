@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:notes/app/router/app_router.dart';
 import 'package:notes/app/theme/app_theme.dart';
+import 'package:notes/features/auth/presentation/widgets/habit_drawer.dart';
 import 'package:notes/features/auth/presentation/widgets/habit_logo_mark.dart';
 
 class _OnboardingSlideData {
@@ -51,7 +52,7 @@ class OnboardingScreen extends HookConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      drawer: const _HabitDrawer(),
+      drawer: const HabitDrawer(),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -255,146 +256,6 @@ class _HabitPillButton extends StatelessWidget {
                 fontWeight: FontWeight.w400,
                 letterSpacing: 0.4,
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Material `Drawer` matching the 3rd reference screen (`HaBIT Note V1.0.0`,
-/// Forgot Password, Privacy Policy, Terms of Use, with vertical amber gradient).
-class _HabitDrawer extends StatelessWidget {
-  const _HabitDrawer();
-
-  @override
-  Widget build(BuildContext context) {
-    const leftIndent = 44.0;
-
-    return Drawer(
-      shape: const RoundedRectangleBorder(),
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 0.20, 0.55, 1.0],
-            colors: [
-              Color(0xFFF3F3F3),
-              Color(0xFFF7F4EE),
-              Color(0xFFFCE2B6),
-              AppColors.primary,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top Hamburger Icon
-              Padding(
-                padding: const EdgeInsets.only(left: 28, top: 16),
-                child: HabitHamburgerButton(
-                  width: 28,
-                  onTap: () => Navigator.of(context).pop(),
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              // Brand Title & Version
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: leftIndent),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'HaBIT Note',
-                      style: TextStyle(
-                        fontFamily: 'FugazOne',
-                        fontSize: 24,
-                        color: Colors.black,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'V1.0.0',
-                      style: TextStyle(
-                        fontSize: 17,
-                        color: Colors.black,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // Full-width thin horizontal line
-              const Divider(
-                color: Colors.black54,
-                thickness: 1,
-                height: 1,
-              ),
-              const SizedBox(height: 24),
-
-              // Menu items
-              _MenuLinkItem(
-                title: 'Forgot Password',
-                leftIndent: leftIndent,
-                onTap: () {
-                  Navigator.of(context).pop();
-                  context.router.push(const ForgotPasswordRoute());
-                },
-              ),
-              _MenuLinkItem(
-                title: 'Privacy Policy',
-                leftIndent: leftIndent,
-                onTap: () => Navigator.of(context).pop(),
-              ),
-              _MenuLinkItem(
-                title: 'Terms of Use',
-                leftIndent: leftIndent,
-                onTap: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MenuLinkItem extends StatelessWidget {
-  final String title;
-  final double leftIndent;
-  final VoidCallback onTap;
-
-  const _MenuLinkItem({
-    required this.title,
-    required this.leftIndent,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: leftIndent,
-          vertical: 14,
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              color: Colors.black,
-              fontWeight: FontWeight.w400,
             ),
           ),
         ),

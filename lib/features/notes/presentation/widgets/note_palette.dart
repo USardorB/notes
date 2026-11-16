@@ -1,23 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:notes/app/theme/app_theme.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:notes/features/notes/presentation/widgets/tour_spotlight_overlay.dart';
 
-/// The 12 note card colors shown in "Filter by colour" and "Select Colour".
-const List<int> notePaletteColors = [
-  0xFFFFFFFF, // White (outlined)
-  0xFFFF9E9E, // Coral / Salmon
-  0xFFFFB347, // Amber / Primary
-  0xFFFFF599, // Light Yellow
-  0xFF91F48F, // Light Green
-  0xFF9EFFFF, // Cyan
-  0xFFFF9EFA, // Pink / Magenta
-  0xFFB69CFF, // Lavender
-  0xFF6247EA, // Indigo
-  0xFFFADAE6, // Soft Pink
-  0xFFF0F0F0, // Off-white
-  0xFFBDBDBD, // Medium Gray
-];
-
-/// Colors arranged for the 3-column "Filter by colour" sheet (Image 4).
+/// Colors arranged for the 3-column "Filter by colour" sheet.
 const List<int> filterGridColors = [
   0xFFFFFFFF, 0xFFFF9E9E, 0xFFFFB347,
   0xFFFFF599, 0xFF91F48F, 0xFF9EFFFF,
@@ -25,7 +10,7 @@ const List<int> filterGridColors = [
   0xFFFADAE6, 0xFFF0F0F0, 0xFFBDBDBD,
 ];
 
-/// Colors arranged for the 5-column "Select Colour" sheet (Image 6).
+/// Colors arranged for the 5-column "Select Colour" sheet.
 const List<int> selectColourCircleColors = [
   0xFFFFFFFF, 0xFFFF9E9E, 0xFFFFB347, 0xFFFFF599, 0xFF9EFFFF,
   0xFF91F48F, 0xFFFF9EFA, 0xFFB69CFF, 0xFF6247EA, 0xFFBDBDBD,
@@ -41,7 +26,7 @@ String formatRelativeTime(DateTime dateTime) {
   return '${diff.inDays} days ago';
 }
 
-/// Image 4: "Filter by colour" modal bottom sheet.
+/// "Filter by colour" modal bottom sheet.
 Future<void> showFilterByColourSheet({
   required BuildContext context,
   required int? selectedColor,
@@ -141,81 +126,14 @@ Future<void> showFilterByColourSheet({
   );
 }
 
-enum NewNoteAction { addNote, addTodo }
-
-/// Image 5: "New" modal bottom sheet ("Add note" / "Add to-do").
-Future<NewNoteAction?> showNewNoteTypeSheet(BuildContext context) {
-  return showModalBottomSheet<NewNoteAction>(
-    context: context,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (sheetContext) {
-      return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'New',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 18),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(
-                  Icons.keyboard,
-                  color: Colors.black,
-                  size: 28,
-                ),
-                title: const Text(
-                  'Add note',
-                  style: TextStyle(
-                    fontSize: 19,
-                    color: Colors.black,
-                  ),
-                ),
-                onTap: () =>
-                    Navigator.of(sheetContext).pop(NewNoteAction.addNote),
-              ),
-              const SizedBox(height: 6),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(
-                  Icons.check_box,
-                  color: Colors.black,
-                  size: 28,
-                ),
-                title: const Text(
-                  'Add to-do',
-                  style: TextStyle(
-                    fontSize: 19,
-                    color: Colors.black,
-                  ),
-                ),
-                onTap: () =>
-                    Navigator.of(sheetContext).pop(NewNoteAction.addTodo),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
-
-/// Image 6: "Delete note" + "Select Colour" bottom sheet for Note/Todo editors.
+/// "Delete note" + "Select Colour" bottom sheet for Note/Todo editors.
 Future<void> showNoteOptionsSheet({
   required BuildContext context,
   required int currentColor,
   required ValueChanged<int> onColorSelected,
   required VoidCallback? onDelete,
+  bool showTourGuide = false,
+  VoidCallback? onSkipTour,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -224,266 +142,155 @@ Future<void> showNoteOptionsSheet({
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     builder: (sheetContext) {
-      return SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (onDelete != null) ...[
-              InkWell(
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  onDelete();
-                },
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.delete_outline,
-                        color: Colors.black,
-                        size: 28,
+      return HookBuilder(
+        builder: (hookContext) {
+          final sheetContentKey = useMemoized(GlobalKey.new);
+
+          useEffect(
+            () {
+              if (!showTourGuide) return null;
+              final entry = OverlayEntry(
+                builder: (_) => TourSpotlightOverlay(
+                  targetKey: sheetContentKey,
+                  stepLabel: 'Step 5 of 6',
+                  title: 'Colours & Delete',
+                  description:
+                      'Pick a colour to organize your note or use Delete note above. Tap a colour or press "Done" to close.',
+                  primaryActionLabel: 'Done',
+                  onPrimaryAction: () {
+                    if (sheetContext.mounted) {
+                      Navigator.of(sheetContext).pop();
+                    }
+                  },
+                  onSkip: () {
+                    onSkipTour?.call();
+                    if (sheetContext.mounted) {
+                      Navigator.of(sheetContext).pop();
+                    }
+                  },
+                ),
+              );
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (hookContext.mounted) {
+                  Overlay.of(hookContext).insert(entry);
+                }
+              });
+              return entry.remove;
+            },
+            [showTourGuide],
+          );
+
+          return SafeArea(
+            child: Column(
+              key: sheetContentKey,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (onDelete != null || showTourGuide) ...[
+                  InkWell(
+                    onTap: onDelete == null
+                        ? null
+                        : () {
+                            Navigator.of(sheetContext).pop();
+                            onDelete();
+                          },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 28,
+                        vertical: 20,
                       ),
-                      SizedBox(width: 22),
-                      Text(
-                        'Delete note',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete_outline,
+                            color: onDelete == null
+                                ? Colors.black38
+                                : Colors.black,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 22),
+                          Text(
+                            'Delete note',
+                            style: TextStyle(
+                              fontSize: 19,
+                              color: onDelete == null
+                                  ? Colors.black38
+                                  : Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const Divider(height: 1, thickness: 1, color: Colors.black54),
+                ],
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Select Colour',
                         style: TextStyle(
                           fontSize: 19,
+                          fontWeight: FontWeight.w500,
                           color: Colors.black,
                         ),
+                      ),
+                      const SizedBox(height: 22),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: selectColourCircleColors.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 5,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                        ),
+                        itemBuilder: (context, index) {
+                          final colorVal = selectColourCircleColors[index];
+                          final isSelected = currentColor == colorVal;
+                          final isWhite = colorVal == 0xFFFFFFFF;
+                          return GestureDetector(
+                            onTap: () {
+                              onColorSelected(colorVal);
+                              Navigator.of(sheetContext).pop();
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(colorVal),
+                                border: isSelected
+                                    ? Border.all(
+                                        color: Colors.black,
+                                        width: 2.5,
+                                      )
+                                    : isWhite
+                                        ? Border.all(
+                                            color: Colors.black87,
+                                            width: 1.2,
+                                          )
+                                        : null,
+                              ),
+                              child: isSelected
+                                  ? const Icon(
+                                      Icons.check,
+                                      size: 20,
+                                      color: Colors.black,
+                                    )
+                                  : null,
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
-              ),
-              const Divider(height: 1, thickness: 1, color: Colors.black54),
-            ],
-            Padding(
-              padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Select Colour',
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: selectColourCircleColors.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 5,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                    ),
-                    itemBuilder: (context, index) {
-                      final colorVal = selectColourCircleColors[index];
-                      final isSelected = currentColor == colorVal;
-                      final isWhite = colorVal == 0xFFFFFFFF;
-                      return GestureDetector(
-                        onTap: () {
-                          onColorSelected(colorVal);
-                          Navigator.of(sheetContext).pop();
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Color(colorVal),
-                            border: isSelected
-                                ? Border.all(color: Colors.black, width: 2.5)
-                                : isWhite
-                                    ? Border.all(
-                                        color: Colors.black87,
-                                        width: 1.2,
-                                      )
-                                    : null,
-                          ),
-                          child: isSelected
-                              ? const Icon(
-                                  Icons.check,
-                                  size: 20,
-                                  color: Colors.black,
-                                )
-                              : null,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       );
     },
   );
-}
-
-enum OcrImageSource { camera, gallery }
-
-/// Image 2 (OCR): "New" modal bottom sheet ("Take photo" / "Choose from gallery").
-Future<OcrImageSource?> showOcrImageSourceSheet(BuildContext context) {
-  return showModalBottomSheet<OcrImageSource>(
-    context: context,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (sheetContext) {
-      return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'New',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 18),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(
-                  Icons.camera_alt,
-                  color: Colors.black,
-                  size: 28,
-                ),
-                title: const Text(
-                  'Take photo',
-                  style: TextStyle(
-                    fontSize: 19,
-                    color: Colors.black,
-                  ),
-                ),
-                onTap: () =>
-                    Navigator.of(sheetContext).pop(OcrImageSource.camera),
-              ),
-              const SizedBox(height: 6),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(
-                  Icons.collections,
-                  color: Colors.black,
-                  size: 28,
-                ),
-                title: const Text(
-                  'Choose from gallery',
-                  style: TextStyle(
-                    fontSize: 19,
-                    color: Colors.black,
-                  ),
-                ),
-                onTap: () =>
-                    Navigator.of(sheetContext).pop(OcrImageSource.gallery),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-}
-
-/// Images 5 & 6: Styled confirmation dialog for "Log out" and "Exit app".
-Future<bool> showHabitConfirmDialog({
-  required BuildContext context,
-  required String title,
-  required String message,
-  required String confirmLabel,
-  String cancelLabel = 'No',
-}) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) {
-      return Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 21,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                message,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black45,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 46,
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.black54,
-                          side: const BorderSide(color: Color(0xFFD0D5DD)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: () => Navigator.of(dialogContext).pop(false),
-                        child: Text(
-                          cancelLabel,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: SizedBox(
-                      height: 46,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: () => Navigator.of(dialogContext).pop(true),
-                        child: Text(
-                          confirmLabel,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-  return confirmed ?? false;
 }
