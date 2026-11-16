@@ -11,7 +11,11 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 enum AppLanguage {
   en(Locale('en'), 'English'),
   ru(Locale('ru'), 'Русский'),
-  uz(Locale('uz'), "O'zbekcha");
+  uz(Locale('uz'), "O'zbekcha"),
+  tr(Locale('tr'), 'Türkçe'),
+  ar(Locale('ar'), 'العربية'),
+  pl(Locale('pl'), 'Polski'),
+  de(Locale('de'), 'Deutsch');
 
   final Locale locale;
   final String label;
