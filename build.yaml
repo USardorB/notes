@@ -1,0 +1,8 @@
+targets:
+  $default:
+    builders:
+      retrofit_generator:
+        options:
+          # Global parser configuration (trevorwang/retrofit.dart PR #939).
+          # Eliminates repeating `parser: Parser.DartMappable` on every @RestApi() class.
+          parser: dart_mappable
